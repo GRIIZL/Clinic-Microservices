@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  auth-db:
+    image: postgres:16-alpine 
+    container_name: clinic-auth-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: InnowiseSuperSecretPassword123!
+      POSTGRES_DB: AuthDB
+    ports:
+      - "5432:5432" 
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    networks:
+      - clinic-network
+
+networks:
+  clinic-network:
+    driver: bridge
+
+volumes:
+  auth-db-data:
+  appointments-db-data:

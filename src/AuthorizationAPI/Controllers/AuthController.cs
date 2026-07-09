@@ -47,5 +47,18 @@ namespace AuthorizationAPI.Controllers
 
             return Ok(new { message = "Email verification succeed! Now you enter the system."});
         }
+                [HttpPost("sign-in")]
+        public async Task<IActionResult> SignIn([FromBody] LoginRequestDto request)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var token = await _authService.LoginAsync(request);
+            if (token == null)
+            {
+                return Unauthorized(new { message = "Неверный email или пароль." });
+            }
+
+            return Ok(new { token = token });
+        }
     }
 }

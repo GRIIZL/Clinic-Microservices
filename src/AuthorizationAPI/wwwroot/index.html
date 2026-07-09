@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Innowise Clinic - Portal</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 100%);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        h1 {
+            color: #0f172a;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+        .main-buttons {
+            display: flex;
+            gap: 20px;
+        }
+        .btn-main {
+            padding: 15px 40px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+        .btn-primary { background: #1a73e8; color: white; }
+        .btn-primary:hover { background: #1557b5; }
+        .btn-secondary { background: white; color: #1a73e8; border: 2px solid #1a73e8; }
+        .btn-secondary:hover { background: #f8fafc; }
+
+        /* ОКНА АВТОРИЗАЦИИ */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none; 
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal-card {
+            background: white;
+            padding: 35px;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            width: 340px;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px; right: 20px;
+            font-size: 24px; color: #94a3b8;
+            cursor: pointer;
+        }
+        .close-btn:hover { color: #475569; }
+
+        h2 { color: #0f172a; margin-top: 0; font-size: 22px; margin-bottom: 25px; }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #4a5568; }
+        
+        input {
+            width: 100%; padding: 11px;
+            border: 2px solid #cbd5e1; border-radius: 8px;
+            box-sizing: border-box; font-size: 14px;
+        }
+        input:focus { border-color: #1a73e8; outline: none; }
+        
+        .btn-submit {
+            width: 100%; background: #1a73e8; color: white; border: none;
+            padding: 13px; border-radius: 8px; font-weight: bold;
+            cursor: pointer; font-size: 15px; margin-top: 10px;
+        }
+        .btn-submit:hover { background: #1557b5; }
+        
+        .btn-submit:disabled {
+            background: #cbd5e1;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+        
+        .switch-link {
+            text-align: center; margin-top: 20px; font-size: 14px; color: #64748b;
+        }
+        .switch-link a { color: #1a73e8; text-decoration: none; font-weight: 600; }
+        .switch-link a:hover { text-decoration: underline; }
+
+        .error-msg { color: #dc2626; font-size: 12px; margin-top: 5px; display: none; }
+        .status-msg { font-size: 14px; margin-top: 15px; text-align: center; font-weight: 500; }
+        
+        .token-box {
+            background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px;
+            border-radius: 8px; word-break: break-all; font-family: monospace;
+            font-size: 11px; margin-top: 15px; max-height: 80px; overflow-y: auto; display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Медицинский Портал Клиники</h1>
+    
+    <div class="main-buttons">
+        <button class="btn-main btn-secondary" onclick="openModal('loginModal')">Войти</button>
+        <button class="btn-main btn-primary" onclick="openModal('registerModal')">Зарегистрироваться</button>
+    </div>
+
+    <div id="registerModal" class="modal-overlay">
+        <div class="modal-card">
+            
+            <span class="close-btn" onclick="closeModal('registerModal')">&times;</span>
+            <h2>Регистрация аккаунта</h2>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="regEmail" placeholder="example@mail.com">
+                <div id="emailError" class="error-msg">User with this email already exists</div>
+            </div>
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="password" id="regPassword" placeholder="От 6 до 15 символов">
+            </div>
+            <div class="form-group">
+                <label>Подтверждение пароля</label>
+                <input type="password" id="regConfirmPassword" placeholder="Повторите пароль">
+            </div>
+            <button class="btn-submit" id="regBtn" onclick="handleRegister()">Зарегистрироваться</button>
+            <div id="regSuccess" class="status-msg"></div>
+            
+            <div class="switch-link">
+                Уже есть аккаунт? <a href="javascript:void(0)" onclick="switchModal('registerModal', 'loginModal')">Войти</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="loginModal" class="modal-overlay">
+        <div class="modal-card">
+            
+            <span class="close-btn" onclick="closeModal('loginModal')">&times;</span>
+            <h2>Вход в систему</h2>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="example@mail.com">
+            </div>
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="password" id="loginPassword" placeholder="Введите пароль">
+            </div>
+           
+            <button class="btn-submit" id="loginBtn" onclick="handleLogin()" disabled>Sign in</button>
+            <div id="loginResult" class="status-msg"></div>
+            <div id="tokenOutput" class="token-box"></div>
+            
+            
+            <div class="switch-link">
+                Еще нет аккаунта? <a href="javascript:void(0)" onclick="switchModal('loginModal', 'registerModal')">Sign up</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5176/api/auth';
+        let isEmailUnique = true;
+
+        function openModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+        
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function switchModal(closeId, openId) {
+            closeModal(closeId);
+            openModal(openId);
+        }
+
+        const loginEmailInput = document.getElementById('loginEmail');
+        const loginPasswordInput = document.getElementById('loginPassword');
+        const loginButton = document.getElementById('loginBtn');
+
+        function validateLoginFields() {
+            const email = loginEmailInput.value.trim();
+            const password = loginPasswordInput.value;
+            
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const isEmailValid = emailRegex.test(email);
+
+            if (email === "" || password === "" || !isEmailValid) {
+                loginButton.disabled = true;
+            } else {
+                loginButton.disabled = false;
+            }
+        }
+
+        loginEmailInput.addEventListener('input', validateLoginFields);
+        loginPasswordInput.addEventListener('input', validateLoginFields);
+
+        document.getElementById('regEmail').addEventListener('blur', async (e) => {
+            const email = e.target.value.trim();
+            const errorDiv = document.getElementById('emailError');
+            if(!email) return;
+
+            try {
+                const response = await fetch(`${API_URL}/check-email?email=${encodeURIComponent(email)}`);
+                const data = await response.json();
+
+                if (data.exists) {
+                    e.target.style.borderColor = '#dc2626';
+                    errorDiv.style.display = 'block';
+                    isEmailUnique = false;
+                } else {
+                    e.target.style.borderColor = '#16a34a';
+                    errorDiv.style.display = 'none';
+                    isEmailUnique = true;
+                }
+            } catch(err) {
+                console.error("Ошибка связи с API:", err);
+            }
+        });
+
+        async function handleRegister() {
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+            const successDiv = document.getElementById('regSuccess');
+
+            successDiv.innerText = '';
+
+            if (!isEmailUnique) {
+                successDiv.style.color = '#dc2626';
+                successDiv.innerText = "Невозможно зарегистрироваться. Этот Email занят.";
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, confirmPassword })
+                });
+
+                if (response.ok) {
+                    successDiv.style.color = '#16a34a';
+                    successDiv.innerText = "Успех! Ссылка подтверждения отправлена в консоль VS Code.";
+                } else {
+                    const data = await response.json();
+                    successDiv.style.color = '#dc2626';
+                    
+                    if (data.errors) {
+                        successDiv.innerText = Object.values(data.errors).flat().join(' ');
+                    } else {
+                        successDiv.innerText = data.message || "Ошибка регистрации.";
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                successDiv.style.color = '#dc2626';
+                successDiv.innerText = "Ошибка сети при регистрации.";
+            }
+        }
+
+        async function handleLogin() {
+            const email = loginEmailInput.value.trim();
+            const password = loginPasswordInput.value;
+            const resultDiv = document.getElementById('loginResult');
+            const tokenBox = document.getElementById('tokenOutput');
+
+            resultDiv.innerText = '';
+            tokenBox.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_URL}/sign-in`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    resultDiv.style.color = '#16a34a';
+                    resultDiv.innerText = "You've signed in successfully!";
+                    tokenBox.innerText = data.token;
+                    tokenBox.style.display = 'block';
+                } else {
+                    resultDiv.style.color = '#dc2626';
+                    resultDiv.innerText = "Either an email or a password is incorrect.";
+                }
+            } catch (err) {
+                console.error(err);
+                resultDiv.style.color = '#dc2626';
+                resultDiv.innerText = "Ошибка сети при авторизации.";
+            }
+        }
+    </script>
+    
+</body>
+</html>
+        

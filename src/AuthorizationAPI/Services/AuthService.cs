@@ -3,6 +3,11 @@ using AuthorizationAPI.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Numerics;
 using System.Security.Cryptography;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace AuthorizationAPI.Services
 {
@@ -10,11 +15,13 @@ namespace AuthorizationAPI.Services
     {
         private readonly DataContext _context;
         private readonly ILogger<AuthService> _logger;
+        private readonly IConfiguration _configuration;
 
-        public AuthService(DataContext context, ILogger<AuthService> logger)
+        public AuthService(DataContext context, ILogger<AuthService> logger, IConfiguration configuration)
         {
             _context = context;
             _logger = logger; 
+            _configuration = configuration;
         }
 
         public async Task<bool> IsEmailRegisteredAsync(string email)
@@ -51,7 +58,7 @@ namespace AuthorizationAPI.Services
             _context.Accounts.Add(newAccount);
             await _context.SaveChangesAsync();
 
-            var confirmationLink = $"https://localhost:5001/api/auth/verefy?token={verificationToken}";
+            var confirmationLink = $"http://localhost:5001/api/auth/verefy?token={verificationToken}";
             _logger.LogInformation($"\n==================================================\n" +
                                    $"SENDING EMAIL ON: {newAccount.Email}\n" +
                                    $"To confirm registration go to:\n{confirmationLink}\n" +
@@ -77,6 +84,52 @@ namespace AuthorizationAPI.Services
 
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<string?> LoginAsync(LoginRequestDto request)
+        {
+            var account = await _context.Accounts
+                .FirstOrDefaultAsync(a => a.Email.ToLower() == request.Email.ToLower().Trim());
+
+            if (account == null) return null;
+  
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, account.PasswordHash))
+            {
+                return null;
+            }
+
+            return GenerateJwtToken(account);
+        }
+
+        private string GenerateJwtToken(Account account)
+        {
+            var secretKey = _configuration["Jwt:Secret"] ?? throw new InvalidOperationException("JWT Secret missing");
+            var issuer = _configuration["Jwt:Issuer"];
+            var audience = _configuration["Jwt:Audience"];
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, account.Id.ToString()),
+                new Claim(ClaimTypes.Email, account.Email),
+                new Claim(ClaimTypes.Role, account.Role)
+            };
+
+            var token = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddHours(2), 
+                Issuer = issuer,
+                Audience = audience,
+                SigningCredentials = creds
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var jwt = tokenHandler.CreateToken(token);
+
+            return tokenHandler.WriteToken(jwt);
         }
     }
 }
