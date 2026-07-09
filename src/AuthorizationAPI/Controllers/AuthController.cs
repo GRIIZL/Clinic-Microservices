@@ -1,6 +1,8 @@
 using AuthorizationAPI.Models;
 using AuthorizationAPI.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.OpenApi;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace AuthorizationAPI.Controllers
 {
@@ -47,18 +49,62 @@ namespace AuthorizationAPI.Controllers
 
             return Ok(new { message = "Email verification succeed! Now you enter the system."});
         }
-                [HttpPost("sign-in")]
+
+        [HttpPost("sign-in")]
         public async Task<IActionResult> SignIn([FromBody] LoginRequestDto request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var token = await _authService.LoginAsync(request);
-            if (token == null)
+            var authResult = await _authService.LoginAsync(request);
+            if (authResult == null)
             {
-                return Unauthorized(new { message = "Неверный email или пароль." });
+               return Unauthorized(new { message = "Either an email or a password is incorrect." });
             }
 
-            return Ok(new { token = token });
+            return Ok(authResult);
+        }
+
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequestDto request)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var authResult = await _authService.RefreshTokenAsync(request.RefreshToken);
+            if (authResult == null)
+            {
+                return Unauthorized(new { message = "Invalid or expired refresh token." });
+            }
+
+            return Ok(authResult);
+        }
+
+        [HttpPost("sign-out")]
+        public IActionResult SignOutUser()
+        {
+            var authHeader = Request.Headers["Authorization"].ToString();
+
+            if(string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer"))
+            {
+                return BadRequest(new {message = "Token missing or malformed."});
+            }
+
+            var token = authHeader.Substring("Bearer ".Length).Trim();
+
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jwtToken = handler.ReadJwtToken(token);
+                var expiry = jwtToken.ValidTo;
+
+                var blacklistService = HttpContext.RequestServices.GetRequiredService<TokenBlacklistService>();
+                blacklistService.BlacklistToken(token, expiry);
+
+                return Ok(new {message = "You've logged out successfully. Token invalidated."});
+            }
+            catch
+            {
+                return BadRequest(new { message = "Could not process token destruction."});
+            }
         }
     }
 }

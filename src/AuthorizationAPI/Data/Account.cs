@@ -13,7 +13,9 @@ namespace AuthorizationAPI.Data
 
         public string? VerificationToken { get; set; }
         public DateTime? VerificationTokenExpires { get; set; }
-
+        public string? RefreshToken { get; set; }
+        public DateTime? RefreshTokenExpires { get; set; }
+        
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }

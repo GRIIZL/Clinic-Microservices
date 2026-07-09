@@ -210,7 +210,12 @@
         document.getElementById('regEmail').addEventListener('blur', async (e) => {
             const email = e.target.value.trim();
             const errorDiv = document.getElementById('emailError');
-            if(!email) return;
+            if(!email){
+                e.target.style.borderColor = '#cbd5e1';
+                errorDiv.style.display = 'none';
+                isEmailUnique = false;
+                return;
+            }
 
             try {
                 const response = await fetch(`${API_URL}/check-email?email=${encodeURIComponent(email)}`);

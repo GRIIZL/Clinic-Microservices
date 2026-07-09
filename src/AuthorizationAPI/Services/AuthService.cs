@@ -58,7 +58,7 @@ namespace AuthorizationAPI.Services
             _context.Accounts.Add(newAccount);
             await _context.SaveChangesAsync();
 
-            var confirmationLink = $"http://localhost:5001/api/auth/verefy?token={verificationToken}";
+            var confirmationLink = $"http://localhost:5176/api/auth/verify?token={verificationToken}";
             _logger.LogInformation($"\n==================================================\n" +
                                    $"SENDING EMAIL ON: {newAccount.Email}\n" +
                                    $"To confirm registration go to:\n{confirmationLink}\n" +
@@ -86,7 +86,7 @@ namespace AuthorizationAPI.Services
             return true;
         }
 
-        public async Task<string?> LoginAsync(LoginRequestDto request)
+        public async Task<AuthResponseDto?> LoginAsync(LoginRequestDto request)
         {
             var account = await _context.Accounts
                 .FirstOrDefaultAsync(a => a.Email.ToLower() == request.Email.ToLower().Trim());
@@ -98,7 +98,47 @@ namespace AuthorizationAPI.Services
                 return null;
             }
 
-            return GenerateJwtToken(account);
+            var accessToken = GenerateJwtToken(account);
+            var refreshToken = GenerateRefreshToken();
+
+            account.RefreshToken = refreshToken;
+            account.RefreshTokenExpires = DateTime.UtcNow.AddDays(7);
+            account.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return new AuthResponseDto { AccessToken = accessToken, RefreshToken = refreshToken };
+        }
+
+        public async Task<AuthResponseDto?> RefreshTokenAsync(string token)
+        {
+            // Ищем аккаунт, у которого совпадает рефреш-токен
+            var account = await _context.Accounts
+                .FirstOrDefaultAsync(a => a.RefreshToken == token);
+
+            // Проверяем: существует ли токен и не просрочен ли он
+            if (account == null || account.RefreshTokenExpires < DateTime.UtcNow)
+            {
+                return null; // Токен невалиден или просрочен
+            }
+
+            // Если всё ок — выпускаем новую пару токенов (Паттерн ротации рефреш-токенов)
+            var newAccessToken = GenerateJwtToken(account);
+            var newRefreshToken = GenerateRefreshToken();
+
+            // Перезаписываем токен в базе данных ради безопасности
+            account.RefreshToken = newRefreshToken;
+            account.RefreshTokenExpires = DateTime.UtcNow.AddDays(7);
+            account.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return new AuthResponseDto { AccessToken = newAccessToken, RefreshToken = newRefreshToken };
+        }
+
+        private string GenerateRefreshToken()
+        {
+            return Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
         }
 
         private string GenerateJwtToken(Account account)
