@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Innowise Clinic - Portal</title>
     <style>
+        .password-container {
+            position: relative;
+            width: 100%;
+        }
+        .password-container input {
+            padding-right: 40px; /* Оставляем место для глазика */
+        }
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #64748b;
+            user-select: none;
+            font-size: 16px;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 100%);
@@ -155,7 +173,10 @@
             </div>
             <div class="form-group">
                 <label>Пароль</label>
-                <input type="password" id="loginPassword" placeholder="Введите пароль">
+                <div class="password-container">
+                    <input type="password" id="loginPassword" placeholder="Введите пароль">
+                    <span class="toggle-password" onclick="togglePasswordVisibility('loginPassword', this)">👁️</span>
+                </div>
             </div>
            
             <button class="btn-submit" id="loginBtn" onclick="handleLogin()" disabled>Sign in</button>
@@ -175,6 +196,17 @@
 
         function openModal(id) {
             document.getElementById(id).style.display = 'flex';
+        }
+
+        function togglePasswordVisibility(inputId, iconElement) {
+            const input = document.getElementById(inputId);
+            if (input.type === "password") {
+                input.type = "text";
+                iconElement.innerText = "🔒"; // Меняем иконку при показе
+            } else {
+        input.type = "password";
+        iconElement.innerText = "👁️";
+         }
         }
         
         function closeModal(id) {

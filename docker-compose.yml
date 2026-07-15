@@ -15,6 +15,16 @@ services:
     networks:
       - clinic-network
 
+  auth-redis:
+    image: redis:7-alpine
+    container_name: clinic-auth-redis
+    ports:
+     - "6379:6379"
+    volumes:
+      - auth-redis-data:/data
+    networks:
+      - clinic-network
+
 networks:
   clinic-network:
     driver: bridge
@@ -22,3 +32,4 @@ networks:
 volumes:
   auth-db-data:
   appointments-db-data:
+  auth-redis-data:

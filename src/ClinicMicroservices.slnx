@@ -1,3 +1,7 @@
 <Solution>
+  <Project Path="Auth.Application/Auth.Application.csproj" />
+  <Project Path="Auth.Domain/Auth.Domain.csproj" />
+  <Project Path="Auth.Infrastructure.PostgreSql/Auth.Infrastructure.PostgreSql.csproj" />
+  <Project Path="Auth.Infrastructure.Redis/Auth.Infrastructure.Redis.csproj" />
   <Project Path="AuthorizationAPI/AuthorizationAPI.csproj" />
 </Solution>
