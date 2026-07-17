@@ -1,9 +1,15 @@
+using System;
 using System.Diagnostics;
-using AuthorizationAPI.Data;
+using System.IO;
+using Auth.Infrastructure.Redis;
 using AuthorizationAPI.Services;
 using Microsoft.EntityFrameworkCore;
+using Auth.Application.Interfaces;
+using Auth.Application.Services;
+using Auth.Infrastructure.PostgreSql.Data;
+using Auth.Infrastructure.PostgreSql.Repositories;
 
-// Автоматический запуск базы данных в Docker при старте приложения
+// Автоматический запуск баз Postgres и Redis в Docker
 try
 {
     var startInfo = new ProcessStartInfo
@@ -16,70 +22,76 @@ try
         UseShellExecute = false,
         CreateNoWindow = true
     };
-
     using var process = Process.Start(startInfo);
     process?.WaitForExit();
-    System.Console.WriteLine("[Docker Auto-Start]: Команда docker-compose up -d успешно отправлена.");
+    Console.WriteLine("[Docker Auto-Start]: Инфраструктура в Docker (Postgres + Redis) запущена.");
 }
 catch (Exception ex)
 {
-    System.Console.WriteLine($"[Docker Auto-Start Warning]: Не удалось запустить docker-compose автоматически: {ex.Message}");
+    Console.WriteLine($"[Docker Auto-Start Warning]: {ex.Message}");
 }
-
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddOpenApi();
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddOpenApi();
+//builder.Services.AddSwashbuckleSwaggerUi(); // Наш UI
 
-builder.Services.AddDbContext<DataContext>(options => 
+// 1. Подключаем PostgreSQL
+builder.Services.AddDbContext<DataContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// 2. Подключаем Redis (Задаем локальный порт из docker-compose)
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = "localhost:6379";
+});
+
+// 3. Внедряем зависимости по SOLID (Интерфейс -> Реализация)
+builder.Services.AddScoped<IAccountRepository, AccountRepository>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<ITokenBlacklistService, TokenBlacklistService>();
 builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();
 
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "Authorization API v1"));
+    
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        OnPrepareResponse = ctx =>
+        {
+            ctx.Context.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
+        }
+    });
+}
+
+// Авто-остановка контейнеров
 app.Lifetime.ApplicationStopping.Register(() =>
 {
     try
     {
-        System.Console.WriteLine("[Docker Auto-Stop]: Останавливаем базу данных в Docker...");
         var stopInfo = new ProcessStartInfo
         {
             FileName = "docker-compose",
-            Arguments = "down", 
+            Arguments = "down",
             WorkingDirectory = @"C:\Projects\Authorization-Service",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
         using var stopProcess = Process.Start(stopInfo);
         stopProcess?.WaitForExit();
-        System.Console.WriteLine("[Docker Auto-Stop]: Контейнеры успешно остановлены.");
     }
-    catch (Exception ex)
-    {
-        System.Console.WriteLine($"[Docker Auto-Stop Warning]: Не удалось остановить Docker: {ex.Message}");
-    }
+    catch { }
 });
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/openapi/v1.json", "Authorization API v1");
-    });
-}
-
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-app.UseDefaultFiles(); 
-app.UseStaticFiles();  
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.MapControllers();
 
 app.Run();

@@ -1,8 +1,11 @@
-using AuthorizationAPI.Models;
-using AuthorizationAPI.Services;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.OpenApi;
+using System;
 using System.IdentityModel.Tokens.Jwt;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+using Auth.Application.Interfaces;
+using Auth.Application.Models;
+using Auth.Application.Services;
 
 namespace AuthorizationAPI.Controllers
 {
@@ -21,33 +24,35 @@ namespace AuthorizationAPI.Controllers
         public async Task<IActionResult> CheckEmail([FromQuery] string email)
         {
             var exists = await _authService.IsEmailRegisteredAsync(email);
-            return Ok(new {exists = exists});
+            return Ok(new { exists = exists });
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var result = await _authService.RegisterPatientAsync(request);
-            return Ok(new { message = "Success registration. Check your email to confirm."});
+            if (!result)
+            {
+                return BadRequest(new { message = "Пользователь с таким email уже существует." });
+            }
+
+            return Ok(new { message = "Регистрация успешна. Проверьте почту для подтверждения." });
         }
 
         [HttpGet("verify")]
         public async Task<IActionResult> VerifyEmail([FromQuery] string token)
         {
-            if (string.IsNullOrEmpty(token)) return BadRequest(new {message = "Token doesn't exist."});
+            if (string.IsNullOrEmpty(token)) return BadRequest(new { message = "Токен отсутствует." });
 
             var result = await _authService.VerifyEmailAsync(token);
             if (!result)
             {
-                return BadRequest(new { message = "Invalid or expired token."});
+                return BadRequest(new { message = "Невалидный или просроченный токен." });
             }
 
-            return Ok(new { message = "Email verification succeed! Now you enter the system."});
+            return Ok(new { message = "Email успешно подтвержден! Теперь вы можете войти в систему." });
         }
 
         [HttpPost("sign-in")]
@@ -58,14 +63,15 @@ namespace AuthorizationAPI.Controllers
             var authResult = await _authService.LoginAsync(request);
             if (authResult == null)
             {
-               return Unauthorized(new { message = "Either an email or a password is incorrect." });
+                return Unauthorized(new { message = "Either an email or a password is incorrect." });
             }
 
             return Ok(authResult);
         }
 
         [HttpPost("refresh")]
-        public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequestDto request)
+        public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequestDto
+         request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -79,13 +85,12 @@ namespace AuthorizationAPI.Controllers
         }
 
         [HttpPost("sign-out")]
-        public IActionResult SignOutUser()
+        public async Task<IActionResult> SignOutUser()
         {
             var authHeader = Request.Headers["Authorization"].ToString();
-
-            if(string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer"))
+            if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
             {
-                return BadRequest(new {message = "Token missing or malformed."});
+                return BadRequest(new { message = "Token missing or malformed." });
             }
 
             var token = authHeader.Substring("Bearer ".Length).Trim();
@@ -96,14 +101,14 @@ namespace AuthorizationAPI.Controllers
                 var jwtToken = handler.ReadJwtToken(token);
                 var expiry = jwtToken.ValidTo;
 
-                var blacklistService = HttpContext.RequestServices.GetRequiredService<TokenBlacklistService>();
-                blacklistService.BlacklistToken(token, expiry);
+                var blacklistService = HttpContext.RequestServices.GetRequiredService<ITokenBlacklistService>();
+                await blacklistService.BlacklistTokenAsync(token, expiry);
 
-                return Ok(new {message = "You've logged out successfully. Token invalidated."});
+                return Ok(new { message = "You've logged out successfully. Token invalidated." });
             }
             catch
             {
-                return BadRequest(new { message = "Could not process token destruction."});
+                return BadRequest(new { message = "Could not process token destruction." });
             }
         }
     }
