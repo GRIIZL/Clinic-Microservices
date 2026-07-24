@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/Auth/">
+    <Project Path="src/Auth/Auth.Application/Auth.Application.csproj" />
+    <Project Path="src/Auth/Auth.Domain/Auth.Domain.csproj" />
+    <Project Path="src/Auth/Auth.Infrastructure.PostgreSql/Auth.Infrastructure.PostgreSql.csproj" />
+    <Project Path="src/Auth/Auth.Infrastructure.Redis/Auth.Infrastructure.Redis.csproj" />
+    <Project Path="src/Auth/AuthorizationAPI/AuthorizationAPI.csproj" />
+  </Folder>
+  
+  <Folder Name="/Offices/">
+    <Project Path="src/Offices/Offices.Application/Offices.Application.csproj" />
+    <Project Path="src/Offices/Offices.Domain/Offices.Domain.csproj" />
+    <Project Path="src/Offices/Offices.Infrastructure.MongoDB/Offices.Infrastructure.MongoDB.csproj" />
+    <Project Path="src/Offices/OfficesAPI/OfficesAPI.csproj" />
+  </Folder>
+</Solution>
