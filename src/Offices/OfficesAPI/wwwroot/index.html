@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Innowise Clinic - Offices Portal</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #0f172a;
+            margin-bottom: 20px;
+            font-size: 2.2rem;
+            text-align: center;
+        }
+
+        .top-bar {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #1a73e8;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1557b5;
+        }
+
+        .btn-primary:disabled {
+            background: #cbd5e1;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .offices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .office-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid #1a73e8;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s;
+        }
+
+        .office-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .office-card.inactive {
+            border-left-color: #94a3b8;
+            opacity: 0.8;
+        }
+
+        .office-card h3 {
+            margin: 0 0 10px 0;
+            color: #1e293b;
+            font-size: 18px;
+        }
+
+        .office-info {
+            font-size: 14px;
+            color: #475569;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .status-badge {
+            inline-size: max-content;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .status-badge.active {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .status-badge.inactive {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-card {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            width: 360px;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            color: #94a3b8;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: #475569;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #4a5568;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #cbd5e1;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: #1a73e8;
+            outline: none;
+        }
+
+        .error-msg {
+            color: #dc2626;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 5px;
+        }
+
+        .radio-group label {
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        .radio-group input {
+            width: auto;
+        }
+
+        .dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .dialog-box {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            width: 300px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .dialog-box p {
+            margin: 0 0 20px 0;
+            font-weight: 500;
+            color: #1e293b;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Портал Управления Офисами Клиники</h1>
+
+    <div class="top-bar">
+        <button class="btn btn-primary" onclick="openCreateModal()">+ Create Office</button>
+    </div>
+
+    <div class="offices-grid" id="officesGrid"></div>
+
+    <div id="officeModal" class="modal-overlay">
+        <div class="modal-card">
+            <span class="close-btn" onclick="handleCancelClick()">&times;</span>
+            <h2 id="modalTitle">Создать офис</h2>
+            <input type="hidden" id="officeId">
+
+            <div class="form-group">
+                <label>City *</label>
+                <input type="text" id="officeCity" placeholder="Например, Минск">
+                <div id="cityError" class="error-msg">Please, enter the office's city</div>
+            </div>
+            <div class="form-group">
+                <label>Street *</label>
+                <input type="text" id="officeStreet" placeholder="Например, Фабрициуса">
+                <div id="streetError" class="error-msg">Please, enter the office's street</div>
+            </div>
+            <div class="form-group">
+                <label>House Number *</label>
+                <input type="text" id="officeHouse" placeholder="Например, 8Б">
+                <div id="houseError" class="error-msg">Please, enter the office's house number</div>
+            </div>
+            <div class="form-group">
+                <label>Office Number (Optional)</label>
+                <input type="text" id="officeNumber" placeholder="Например, 404">
+            </div>
+            <div class="form-group">
+                <label>Registry Phone Number *</label>
+                <input type="text" id="officePhone" placeholder="+375291112233">
+                <div id="phoneError" class="error-msg">Please, enter the phone number</div>
+            </div>
+            <div class="form-group">
+                <label>Status *</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="officeStatus" value="Active" checked> Active</label>
+                    <label><input type="radio" name="officeStatus" value="Inactive"> Inactive</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Photo URL</label>
+                <input type="text" id="officePhoto" placeholder="http://example.com">
+            </div>
+
+            <div class="btn-group" style="display: flex; gap: 10px; margin-top: 25px;">
+                <button class="btn btn-primary" id="saveBtn" onclick="saveOffice()">Save changes</button>
+                <button class="btn btn-secondary" onclick="handleCancelClick()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cancelDialog" class="dialog-overlay">
+        <div class="dialog-box">
+            <p>Do you really want to cancel? Changes will not be saved.</p>
+            <div class="btn-group" style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" onclick="confirmCancel(true)">Yes</button>
+                <button class="btn btn-primary" onclick="confirmCancel(false)">No</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5190/api/offices';
+        let isEditMode = false;
+        let hasChanges = false;
+
+        document.addEventListener('DOMContentLoaded', fetchOffices);
+
+        async function fetchOffices() {
+            try {
+                const response = await fetch(API_URL);
+                const offices = await response.json();
+                const grid = document.getElementById('officesGrid');
+                grid.innerHTML = '';
+
+                if (offices.length === 0) {
+                    grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #64748b;">Офисов пока нет. Создайте первый!</p>';
+                    return;
+                }
+
+                offices.forEach(office => {
+                    const card = document.createElement('div');
+                    card.className = `office-card ${office.status === 'Inactive' ? 'inactive' : ''}`;
+                    const officeNumStr = office.officeNumber ? `, off. ${office.officeNumber}` : '';
+                    const fullAddress = `${office.city}, ${office.street} str., h. ${office.houseNumber}${officeNumStr}`;
+
+                    card.innerHTML = `
+                        <div>
+                            <div class="status-badge ${office.status === 'Active' ? 'active' : 'inactive'}">${office.status}</div>
+                            <h3>${office.city} Office</h3>
+                            <div class="office-info">
+                                <strong>Address:</strong> ${fullAddress}<br>
+                                <strong>Phone:</strong> ${office.registryPhoneNumber}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="openEditModal('${office.id}')">Edit</button>
+                            <button class="btn ${office.status === 'Active' ? 'btn-danger' : 'btn-primary'}" style="padding: 6px 12px; font-size: 12px; flex: 1;" onclick="toggleStatus('${office.id}', '${office.status}')">
+                                ${office.status === 'Active' ? 'Deactivate' : 'Activate'}
+                            </button>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (err) { console.error(err); }
+        }
+
+        function openCreateModal() {
+            isEditMode = false; hasChanges = false;
+            document.getElementById('modalTitle').innerText = "Создать офис";
+            document.getElementById('officeId').value = '';
+            clearForm(); resetValidationStyles();
+            document.getElementById('officeModal').style.display = 'flex';
+        }
+
+        async function openEditModal(id) {
+            isEditMode = true; hasChanges = false;
+            document.getElementById('modalTitle').innerText = "Редактировать офис";
+            resetValidationStyles();
+            try {
+                const response = await fetch(`${API_URL}/${id}`);
+                const office = await response.json();
+                document.getElementById('officeId').value = office.id;
+                document.getElementById('officeCity').value = office.city;
+                document.getElementById('officeStreet').value = office.street;
+                document.getElementById('officeHouse').value = office.houseNumber;
+                document.getElementById('officeNumber').value = office.officeNumber;
+                document.getElementById('officePhone').value = office.registryPhoneNumber;
+                document.getElementById('officePhoto').value = office.photoUrl;
+                document.getElementsByName('officeStatus').forEach(r => r.checked = (r.value === office.status));
+                document.getElementById('officeModal').style.display = 'flex';
+            } catch (err) { console.error(err); }
+        }
+
+        function closeModal() { document.getElementById('officeModal').style.display = 'none'; }
+        function handleCancelClick() { if (hasChanges) { document.getElementById('cancelDialog').style.display = 'flex'; } else { closeModal(); } }
+        function confirmCancel(shouldCancel) { document.getElementById('cancelDialog').style.display = 'none'; if (shouldCancel) closeModal(); }
+
+        async function toggleStatus(id, currentStatus) {
+            const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
+            try {
+                await fetch(`${API_URL}/${id}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                fetchOffices();
+            } catch (err) { console.error(err); }
+        }
+
+        async function saveOffice() {
+            if (!validateAll()) return;
+            const id = document.getElementById('officeId').value;
+            const city = document.getElementById('officeCity').value;
+            const street = document.getElementById('officeStreet').value;
+            const houseNumber = document.getElementById('officeHouse').value;
+            const officeNumber = document.getElementById('officeNumber').value;
+            const registryPhoneNumber = document.getElementById('officePhone').value;
+            const photoUrl = document.getElementById('officePhoto').value;
+            let status = 'Active';
+            document.getElementsByName('officeStatus').forEach(r => { if (r.checked) status = r.value; });
+
+            const payload = { city, street, houseNumber, officeNumber, registryPhoneNumber, status, photoUrl };
+            const url = isEditMode ? `${API_URL}/${id}` : API_URL;
+            const method = isEditMode ? 'PUT' : 'POST';
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) { closeModal(); fetchOffices(); }
+            } catch (err) { console.error(err); }
+        }
+
+        function setupValidation(inputId, errorId) {
+            const input = document.getElementById(inputId);
+            input.addEventListener('blur', () => {
+                const errorDiv = document.getElementById(errorId);
+                if (input.value.trim() === "") { input.style.borderColor = '#dc2626'; errorDiv.style.display = 'block'; }
+                else { input.style.borderColor = '#16a34a'; errorDiv.style.display = 'none'; }
+                checkFormValidity();
+            });
+            input.addEventListener('input', () => { hasChanges = true; checkFormValidity(); });
+        }
+        setupValidation('officeCity', 'cityError');
+        setupValidation('officeStreet', 'streetError');
+        setupValidation('officeHouse', 'houseError');
+        setupValidation('officePhone', 'phoneError');
+        document.getElementById('officeNumber').addEventListener('input', () =>
+            hasChanges = true);
+        document.getElementById('officePhoto').addEventListener('input', () =>
+            hasChanges = true);
+        document.getElementsByName('officeStatus').forEach(r =>
+            r.addEventListener('change', () => hasChanges = true));
+
+        function checkFormValidity() {
+            const city = document.getElementById('officeCity').value.trim();
+            const street = document.getElementById('officeStreet').value.trim();
+            const house = document.getElementById('officeHouse').value.trim();
+            const phone = document.getElementById('officePhone').value.trim();
+            document.getElementById('saveBtn').disabled = (!city || !street || !house || !phone);
+        }
+
+        function validateAll() {
+            checkFormValidity();
+            return !document.getElementById('saveBtn').disabled;
+        }
+
+        function clearForm() {
+            document.getElementById('officeCity').value = '';
+            document.getElementById('officeStreet').value = '';
+            document.getElementById('officeHouse').value = '';
+            document.getElementById('officeNumber').value = '';
+            document.getElementById('officePhone').value = '';
+            document.getElementById('officePhoto').value = '';
+            document.getElementById('saveBtn').disabled = true;
+        }
+
+        function resetValidationStyles() {
+            ['officeCity', 'officeStreet', 'officeHouse', 'officePhone'].forEach(id =>
+                document.getElementById(id).style.borderColor = '#cbd5e1');
+            ['cityError', 'streetError', 'houseError', 'phoneError'].forEach(id =>
+                document.getElementById(id).style.display = 'none');
+        }
+    </script>
+</body>
+
+</html>
