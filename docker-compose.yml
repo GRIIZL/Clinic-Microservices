@@ -38,6 +38,20 @@ services:
     networks:
       - clinic-network
 
+  profiles-db:
+    image: postgres:16-alpine
+    container_name: clinic-profiles-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: InnowiseSuperSecretPassword123!
+      POSTGRES_DB: ProfilesDB
+    ports:
+      - "5433:5432" # Локальный внешний порт 5433
+    volumes:
+      - profiles-db-data:/var/lib/postgresql/data
+    networks:
+      - clinic-network
+
 networks:
   clinic-network:
     driver: bridge
@@ -47,3 +61,4 @@ volumes:
   appointments-db-data:
   auth-redis-data:
   offices-db-data:
+  profiles-db-data:
