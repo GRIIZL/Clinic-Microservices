@@ -13,4 +13,11 @@
     <Project Path="src/Offices/Offices.Infrastructure.MongoDB/Offices.Infrastructure.MongoDB.csproj" />
     <Project Path="src/Offices/OfficesAPI/OfficesAPI.csproj" />
   </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Profiles/">
+    <Project Path="src/Profiles/Profiles.Application/Profiles.Application.csproj" />
+    <Project Path="src/Profiles/Profiles.Domain/Profiles.Domain.csproj" />
+    <Project Path="src/Profiles/Profiles.Infrastructure.PostgreSql/Profiles.Infrastructure.PostgreSql.csproj" />
+    <Project Path="src/Profiles/ProfilesAPI/ProfilesAPI.csproj" />
+  </Folder>
 </Solution>
