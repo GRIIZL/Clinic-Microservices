@@ -53,7 +53,7 @@ namespace Services.Application.Services
             await _repository.UpdateAsync(specialization, cancellationToken);
             return true;
         }
-        
+
         // US-40: Получение списка всех специализаций для админки/ресепшена
         public async Task<IEnumerable<Specialization>> GetSpecializationsListAsync(CancellationToken cancellationToken = default)
         {
@@ -120,7 +120,7 @@ namespace Services.Application.Services
             await _repository.UpdateAsync(specialization, cancellationToken);
 
             // ПАРАЛЛЕЛЬНАЯ ЗАДАЧА 28: Публикуем событие изменения статуса в RabbitMQ для других микросервисов!
-            _messageBusClient.PublishSpecializationStatusChanged(specialization.Id, specialization.Status);
+            await _messageBusClient.PublishSpecializationStatusChanged(specialization.Id, specialization.Status);
 
             return true;
         }
