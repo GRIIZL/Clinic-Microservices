@@ -91,5 +91,15 @@ namespace ServicesAPI.Controllers
 
             return Ok(new { message = $"Status updated to {request.Status} along with inner services." });
         }
+
+        // US-36: Создание новой специализации ресепшионистом
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreateSpecializationDto request, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var result = await _servicesService.CreateSpecializationAsync(request, cancellationToken);
+            return Ok(result);
+        }
     }
 }

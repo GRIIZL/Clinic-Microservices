@@ -124,5 +124,24 @@ namespace Services.Application.Services
 
             return true;
         }
+
+        public async Task<Specialization> CreateSpecializationAsync(CreateSpecializationDto dto, CancellationToken cancellationToken = default)
+        {
+            var spec = new Specialization
+            {
+                Name = dto.Name.Trim(),
+                Status = dto.Status,
+                Services = dto.Services.Select(s => new MedicalService
+                {
+                    Name = s.Name.Trim(),
+                    Price = s.Price,
+                    Status = s.Status,
+                    CategoryName = s.CategoryName
+                }).ToList()
+            };
+
+            await _repository.AddAsync(spec, cancellationToken);
+            return spec;
+        }
     }
 }
