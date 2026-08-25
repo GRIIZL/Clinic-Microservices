@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Profiles.Infrastructure.PostgreSql.Data;
 using Microsoft.EntityFrameworkCore;
@@ -19,13 +20,13 @@ namespace Profiles.Infrastructure.PostgreSql.Repositories
             _context = context;
         }
 
-        public async Task<DoctorProfile?> GetByIdAsync(Guid id)
+        public async Task<DoctorProfile?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            return await _context.Doctors.FindAsync(id);
+            return await _context.Doctors.FindAsync(id, cancellationToken);
         }
 
         // Динамическая сборка SQL-запроса по критерию AC-9 (фильтрация несколькими полями)
-        public async Task<IEnumerable<DoctorProfile>> GetFilteredDoctorsAsync(DoctorQueryParametersDto parameters, bool includeAllStatuses)
+        public async Task<IEnumerable<DoctorProfile>> GetFilteredDoctorsAsync(DoctorQueryParametersDto parameters, bool includeAllStatuses, CancellationToken cancellationToken = default)
         {
             var query = _context.Doctors.AsQueryable();
 
@@ -57,28 +58,28 @@ namespace Profiles.Infrastructure.PostgreSql.Repositories
                 query = query.Where(d => d.OfficeId == parameters.OfficeId.Trim());
             }
 
-            return await query.OrderBy(d => d.LastName).ToListAsync();
+            return await query.OrderBy(d => d.LastName).ToListAsync(cancellationToken);
         }
 
 
-        public async Task AddAsync(DoctorProfile doctor)
+        public async Task AddAsync(DoctorProfile doctor, CancellationToken cancellationToken = default)
         {
-            await _context.Doctors.AddAsync(doctor);
-            await _context.SaveChangesAsync();
+            await _context.Doctors.AddAsync(doctor, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task UpdateAsync(DoctorProfile doctor)
+        public async Task UpdateAsync(DoctorProfile doctor, CancellationToken cancellationToken = default)
         {
             _context.Doctors.Update(doctor);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<bool> ExistsByEmailAsync(string email)
+        public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default)
         {
             // В домене DoctorProfile у нас изначально не было поля Email, давай добавим его
             // или будем проверять уникальность через связь с Auth.
             // Но так как ProfilesDB изолирована, мы добавим колонку Email прямо в сущность доктора!
-            return await _context.Doctors.AnyAsync(d => d.Email.ToLower() == email.ToLower().Trim());
+            return await _context.Doctors.AnyAsync(d => d.Email.ToLower() == email.ToLower().Trim(), cancellationToken);
         }
     }
 }

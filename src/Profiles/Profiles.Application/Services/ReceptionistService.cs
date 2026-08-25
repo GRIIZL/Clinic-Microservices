@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Profiles.Application.Interfaces;
@@ -20,14 +21,14 @@ namespace Profiles.Application.Services
             _logger = logger;
         }
 
-        public async Task<IEnumerable<ReceptionistProfile>> GetListAsync() => await _repository.GetAllAsync();
+        public async Task<IEnumerable<ReceptionistProfile>> GetListAsync(CancellationToken cancellationToken = default) => await _repository.GetAllAsync(cancellationToken);
 
-        public async Task<ReceptionistProfile?> GetByIdAsync(Guid id) => await _repository.GetByIdAsync(id);
+        public async Task<ReceptionistProfile?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) => await _repository.GetByIdAsync(id, cancellationToken);
 
         // Логика создания и генерации кредов по US-53 (AC-4, AC-5)
-        public async Task<object?> CreateAsync(ReceptionistDto dto)
+        public async Task<object?> CreateAsync(ReceptionistDto dto, CancellationToken cancellationToken = default)
         {
-            if (await _repository.ExistsByEmailAsync(dto.Email)) return null; // Email занят по ТЗ
+            if (await _repository.ExistsByEmailAsync(dto.Email, cancellationToken)) return null; // Email занят по ТЗ
 
             // AC-5: Генерируем случайный безопасный пароль
             string generatedPassword = Convert.ToHexString(RandomNumberGenerator.GetBytes(6));
@@ -43,7 +44,7 @@ namespace Profiles.Application.Services
                 PhotoUrl = dto.PhotoUrl ?? string.Empty
             };
 
-            await _repository.AddAsync(receptionist);
+            await _repository.AddAsync(receptionist, cancellationToken);
 
             // AC-4: Симулируем отправку письма с логином и сгенерированным паролем
             _logger.LogInformation($"\n==================================================\n" +
@@ -56,9 +57,9 @@ namespace Profiles.Application.Services
             return new { ProfileId = receptionist.Id, TemporaryPassword = generatedPassword };
         }
 
-        public async Task<bool> UpdateAsync(Guid id, ReceptionistDto dto)
+        public async Task<bool> UpdateAsync(Guid id, ReceptionistDto dto, CancellationToken cancellationToken = default)
         {
-            var receptionist = await _repository.GetByIdAsync(id);
+            var receptionist = await _repository.GetByIdAsync(id, cancellationToken);
             if (receptionist == null) return false;
 
             receptionist.FirstName = dto.FirstName.Trim();
@@ -68,16 +69,16 @@ namespace Profiles.Application.Services
             receptionist.PhotoUrl = dto.PhotoUrl ?? string.Empty;
             receptionist.UpdatedAt = DateTime.UtcNow;
 
-            await _repository.UpdateAsync(receptionist);
+            await _repository.UpdateAsync(receptionist, cancellationToken);
             return true;
         }
 
-        public async Task<bool> DeleteAsync(Guid id)
+        public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            var receptionist = await _repository.GetByIdAsync(id);
+            var receptionist = await _repository.GetByIdAsync(id, cancellationToken);
             if (receptionist == null) return false;
 
-            await _repository.DeleteAsync(receptionist);
+            await _repository.DeleteAsync(receptionist, cancellationToken);
             return true;
         }
     }

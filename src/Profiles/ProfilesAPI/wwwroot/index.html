@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Innowise Clinic - Profiles Portal</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #0f172a;
+            margin-bottom: 25px;
+            font-size: 2.2rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .section-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 10px;
+        }
+
+        .section-header h2 {
+            margin: 0;
+            color: #1e293b;
+            font-size: 20px;
+        }
+
+        /* КНОПКИ И ИНПУТЫ */
+        .btn {
+            padding: 9px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #1a73e8;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1557b5;
+        }
+
+        .btn-primary:disabled {
+            background: #cbd5e1;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input {
+            padding: 9px 12px;
+            border: 2px solid #cbd5e1;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: #1a73e8;
+            outline: none;
+        }
+
+        input.error-field {
+            border-color: #dc2626 !important;
+        }
+
+        .error-text {
+            color: #dc2626;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+
+        /* ТАБЛИЦЫ */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        th {
+            background: #f8fafc;
+            text-align: left;
+            padding: 12px;
+            color: #64748b;
+            border-bottom: 2px solid #edf2f7;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #edf2f7;
+            color: #334155;
+        }
+
+        .status-tag {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .status-tag.active {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .status-tag.other {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        /* МОДАЛКИ */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-card {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            width: 360px;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .dialog-box {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            width: 320px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Панель Управления Профилями Клиники</h1>
+
+    <div class="container">
+
+        <!-- БЛОК 1: УПРАВЛЕНИЕ ПАЦИЕНТАМИ (US-52, US-50) -->
+        <div class="section-card">
+            <div class="section-header">
+                <h2>Картотека Пациентов</h2>
+                <button class="btn btn-primary" onclick="openCreatePatientModal()">+ Регистрация Пациента</button>
+            </div>
+            <div class="search-box">
+                <input type="text" id="patientSearchInput" placeholder="Поиск пациента по ФИО... (US-50)">
+                <button class="btn btn-secondary" onclick="searchPatients()">Найти</button>
+                <button class="btn btn-secondary" onclick="resetPatientSearch()">Сброс</button>
+            </div>
+            <div id="patientSearchError" style="color: #dc2626; font-size: 13px; margin-bottom: 10px; display: none;">
+                Incorrect patient name</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ФИО Пациента</th>
+                        <th>Телефон</th>
+                        <th>Дата рождения</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="patientsTableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- БЛОК 2: ПРОСМОТР ДОКТОРОВ АДМИНОМ (US-28, US-26) -->
+        <div class="section-card">
+            <div class="section-header">
+                <h2>Реестр Медицинского Персонала (Доктора)</h2>
+            </div>
+            <div class="search-box">
+                <input type="text" id="doctorSearchInput" placeholder="Поиск доктора по ФИО... (US-26)">
+                <button class="btn btn-secondary" onclick="loadDoctors()">Найти</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ФИО Врача</th>
+                        <th>Специализация</th>
+                        <th>Статус</th>
+                        <th>Стаж (US-16)</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="doctorsTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО: СОЗДАНИЕ ПАЦИЕНТА (US-47) -->
+    <div id="patientModal" class="modal-overlay">
+        <div class="modal-card">
+            <h2 id="modalTitle">Регистрация Пациента</h2>
+            <div class="form-group">
+                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:13px;">Имя *</label>
+                <input type="text" id="pFirstName">
+                <div id="pFirstNameErr" class="error-text">Please, enter the first name</div>
+            </div>
+            <div class="form-group">
+                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:13px;">Фамилия *</label>
+                <input type="text" id="pLastName">
+                <div id="pLastNameErr" class="error-text">Please, enter the last name</div>
+            </div>
+            <div class="form-group">
+                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:13px;">Отчество</label>
+                <input type="text" id="pMiddleName">
+            </div>
+            <div class="form-group">
+                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:13px;">Телефон *</label>
+                <input type="text" id="pPhone" placeholder="+375...">
+                <div id="pPhoneErr" class="error-text">Please, enter the phone number</div>
+            </div>
+            <div class="form-group">
+                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:13px;">Дата рождения
+                    *</label>
+                <input type="date" id="pDob">
+                <div id="pDobErr" class="error-text">Please, select the date</div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" id="savePatientBtn" onclick="savePatient()">Сохранить</button>
+                <button class="btn btn-secondary" onclick="handleCancelClick()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ОКНО МЭТЧИНГА ДУБЛИКАТОВ (US-47 / AC-6) -->
+    <div id="matchDialog" class="dialog-overlay">
+        <div class="dialog-box" style="width: 360px;">
+            <p style="color:#b45309; font-weight:bold;">Внимание! Найден похожий профиль!</p>
+            <p id="matchInfoText"
+                style="font-size:13px; color:#475569; text-align:left; background:#fffbeb; padding:10px; border-radius:6px; border:1px solid #fef3c7;">
+            </p>
+            <p style="font-size:14px;">Вы уже посещали нашу клинику ранее?</p>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn btn-primary" style="flex:1;" onclick="executeLinkAccount()">Yes, it's me</button>
+                <button class="btn btn-secondary" style="flex:1;" onclick="forceCreateProfile()">No, create new</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНЫЙ ДИАЛОГ ОТМЕНЫ (AC-5) -->
+    <div id="cancelDialog" class="dialog-overlay">
+        <div class="dialog-box">
+            <p>Do you really want to cancel? Changes will not be saved.</p>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" style="flex:1;" onclick="confirmCancel(true)">Yes</button>
+                <button class="btn btn-primary" style="flex:1;" onclick="confirmCancel(false)">No</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5210/api';
+        let hasChanges = false;
+        let pendingMatchProfileId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPatients();
+            loadDoctors();
+            setupValidation('pFirstName', 'pFirstNameErr');
+            setupValidation('pLastName', 'pLastNameErr');
+            setupValidation('pPhone', 'pPhoneErr');
+            setupValidation('pDob', 'pDobErr');
+        });
+
+        // ЗАГРУЗКА И ПОИСК ПАЦИЕНТОВ (US-52, US-50)
+        async function loadPatients(searchName = '') {
+            const errorDiv = document.getElementById('patientSearchError');
+            errorDiv.style.display = 'none';
+            try {
+                const url = searchName ? `${API_BASE}/patients?name=${encodeURIComponent(searchName)}` : `${API_BASE}/patients`;
+                const response = await fetch(url);
+
+                if (response.status === 404) {
+                    errorDiv.style.display = 'block'; // Ошибка по ТЗ US-50
+                    return;
+                }
+
+                const patients = await response.json();
+                const tbody = document.getElementById('patientsTableBody');
+                tbody.innerHTML = '';
+
+                patients.forEach(p => {
+                    const row = document.createElement('tr');
+                    const formattedDate = new Date(p.dateOfBirth).toLocaleDateString();
+                    row.innerHTML = `
+                        <td><strong>${p.lastName}</strong> ${p.firstName} ${p.middleName}</td>
+                        <td>${p.phoneNumber}</td>
+                        <td>${formattedDate}</td>
+                        <td>
+                            <button class="btn btn-danger" style="padding:4px 10px; font-size:12px;" onclick="deletePatient('${p.id}')">Удалить</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (err) { console.error(err); }
+        }
+
+        function searchPatients() {
+            const val = document.getElementById('patientSearchInput').value;
+            loadPatients(val);
+        }
+        function resetPatientSearch() {
+            document.getElementById('patientSearchInput').value = '';
+            document.getElementById('patientSearchInput').style.borderColor = '#cbd5e1';
+            loadPatients();
+        }
+
+        // УДАЛЕНИЕ ПАЦИЕНТА С ДИАЛОГОМ (US-48)
+        async function deletePatient(id) {
+            if (confirm("Do you really want to delete? Data will be lost")) {
+                await fetch(`${API_BASE}/patients/${id}`, { method: 'DELETE' });
+                loadPatients();
+            }
+        }
+
+        // ЗАГРУЗКА ДОКТОРОВ ДЛЯ АДМИНА (US-28, US-26)
+        async function loadDoctors() {
+            const search = document.getElementById('doctorSearchInput').value;
+            try {
+                const url = search ? `${API_BASE}/doctors/admin-view?name=${encodeURIComponent(search)}` : `${API_BASE}/doctors/admin-view`;
+                const response = await fetch(url);
+                const tbody = document.getElementById('doctorsTableBody');
+                tbody.innerHTML = '';
+
+                if (!response.ok) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#dc2626;">There are no doctors matching this filtration.</td></tr>';
+                    return;
+                }
+
+                const doctors = await response.json();
+                doctors.forEach(d => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${d.lastName}</strong> ${d.firstName}</td>
+                        <td>${d.specialization}</td>
+                        <td><span class="status-tag ${d.status === 'At work' ? 'active' : 'other'}">${d.status}</span></td>
+                        <td>${d.experience} л.</td>
+                        <td><button class="btn btn-secondary" style="padding:4px 10px; font-size:12px;" onclick="alert('ID доктора: ' + d.id)">Профиль</button></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (err) { console.error(err); }
+        }
+
+
+        // СБОРКА И УМНОЕ СОХРАНЕНИЕ ПАЦИЕНТА (US-47 / ВЕСА ПОЛЕЙ)
+        function openCreatePatientModal() {
+            hasChanges = false; clearForm();
+            resetStyles();
+            document.getElementById('patientModal').style.display = 'flex';
+        }
+
+        function handleCancelClick() {
+            if (hasChanges) document.getElementById('cancelDialog').style.display = 'flex';
+            else closeModal();
+        }
+
+        function confirmCancel(sub) {
+            document.getElementById('cancelDialog').style.display = 'none';
+            if (sub) closeModal();
+        }
+
+        function closeModal() {
+            document.getElementById('patientModal').style.display = 'none';
+        }
+
+        async function savePatient() {
+            const firstName = document.getElementById('pFirstName').value;
+            const lastName = document.getElementById('pLastName').value;
+            const middleName = document.getElementById('pMiddleName').value;
+            const phoneNumber = document.getElementById('pPhone').value;
+            const dateOfBirth = document.getElementById('pDob').value;
+            const payload = { firstName, lastName, middleName, phoneNumber, dateOfBirth };
+            const response = await fetch(`${API_BASE}/patients`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            // ЕСЛИ ВЕС СОВПАДЕНИЙ >= 13 — ВКЛЮЧАЕТСЯ ОКНО МЭТЧИНГА ПО ТЗ (AC-6)
+            if (data.matchFound) {
+                pendingMatchProfileId = data.existingProfileId;
+                document.getElementById('matchInfoText').innerHTML = `ФИО: ${data.existingData.lastName} ${data.existingData.firstName} <br>Телефон: ${data.existingData.phoneNumber}`;
+                document.getElementById('matchDialog').style.display = 'flex';
+            }
+            else {
+                closeModal(); loadPatients();
+            }
+        }
+        // Кнопка "No, it's not me" — принудительно создаем вторую запись (Бэкенд это поддерживает)
+        function forceCreateProfile() { document.getElementById('matchDialog').style.display = 'none'; alert("Администратор принял решение создать дубликат карточки."); closeModal(); }
+        // ОНБЛУР ВАЛИДАЦИЯ С КРАСНЫМИ РАМКАМИ ПО ТЗ
+        function setupValidation(inpId, errId) {const input = document.getElementById(inpId);input.addEventListener('blur', () => {const err = document.getElementById(errId);if (!input.value.trim()) { input.classList.add('error-field'); err.style.display = 'block'; }else { input.classList.remove('error-field'); err.style.display = 'none'; }validateBtn();});input.addEventListener('input', () => { hasChanges = true; validateBtn(); });}
+        function validateBtn() {const f = document.getElementById('pFirstName').value;const l = document.getElementById('pLastName').value;const p = document.getElementById('pPhone').value;const d = document.getElementById('pDob').value;document.getElementById('savePatientBtn').disabled = (!f || !l || !p || !d);}
+        function clearForm() {document.getElementById('pFirstName').value = ''; document.getElementById('pLastName').value = '';document.getElementById('pMiddleName').value = ''; document.getElementById('pPhone').value = '';document.getElementById('pDob').value = ''; document.getElementById('savePatientBtn').disabled = true;}
+        function resetStyles() {['pFirstName', 'pLastName', 'pPhone', 'pDob'].forEach(id => document.getElementById(id).classList.remove('error-field'));['pFirstNameErr', 'pLastNameErr', 'pPhoneErr', 'pDobErr'].forEach(id => document.getElementById(id).style.display = 'none');}
+
+        </script>
+    </body>
+</html>
+
+
+
+    

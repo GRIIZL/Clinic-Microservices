@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Auth.Application.Interfaces;
@@ -15,40 +16,40 @@ namespace Auth.Infrastructure.PostgreSql.Repositories
             _context = context;
         }
 
-        public async Task<Account?> GetByEmailAsync(string email)
+        public async Task<Account?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
         {
             return await _context.Accounts
-                .FirstOrDefaultAsync(a => a.Email.ToLower() == email.ToLower().Trim());
+                .FirstOrDefaultAsync(a => a.Email.ToLower() == email.ToLower().Trim(), cancellationToken);
         }
 
-        public async Task<Account?> GetByVerificationTokenAsync(string token)
+        public async Task<Account?> GetByVerificationTokenAsync(string token, CancellationToken cancellationToken = default)
         {
             return await _context.Accounts
-                .FirstOrDefaultAsync(a => a.VerificationToken == token);
+                .FirstOrDefaultAsync(a => a.VerificationToken == token, cancellationToken);
         }
 
-        public async Task<Account?> GetByRefreshTokenAsync(string token)
+        public async Task<Account?> GetByRefreshTokenAsync(string token, CancellationToken cancellationToken = default)
         {
             return await _context.Accounts
-                .FirstOrDefaultAsync(a => a.RefreshToken == token);
+                .FirstOrDefaultAsync(a => a.RefreshToken == token, cancellationToken);
         }
 
-        public async Task<bool> ExistByEmailAsync(string email)
+        public async Task<bool> ExistByEmailAsync(string email, CancellationToken cancellationToken = default)
         {
             return await _context.Accounts
-                .AnyAsync(a => a.Email.ToLower() == email.ToLower().Trim());
+                .AnyAsync(a => a.Email.ToLower() == email.ToLower().Trim(), cancellationToken);
         }
 
-        public async Task AddAsync(Account account)
+        public async Task AddAsync(Account account, CancellationToken cancellationToken = default)
         {
-            await _context.Accounts.AddAsync(account);
-            await _context.SaveChangesAsync();
+            await _context.Accounts.AddAsync(account, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task UpdateAsync(Account account)
+        public async Task UpdateAsync(Account account, CancellationToken cancellationToken = default)
         {
             _context.Accounts.Update(account);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
         }
     }
 }

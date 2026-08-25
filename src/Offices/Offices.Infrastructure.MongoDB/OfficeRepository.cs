@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
@@ -19,30 +20,30 @@ namespace Offices.Infrastructure.MongoDB
             _collection = database.GetCollection<MongoOfficeMapping>("Offices");
         }
 
-        public async Task<Office?> GetByIdAsync(string id)
+        public async Task<Office?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
         {
-            var mapping = await _collection.Find(o => o.Id == id).FirstOrDefaultAsync();
+            var mapping = await _collection.Find(o => o.Id == id).FirstOrDefaultAsync(cancellationToken);
             return mapping?.ToDomain();
         }
 
-        public async Task<IEnumerable<Office>> GetAllAsync()
+        public async Task<IEnumerable<Office>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            var mappings = await _collection.Find(_ => true).ToListAsync();
+            var mappings = await _collection.Find(_ => true).ToListAsync(cancellationToken);
             var offices = new List<Office>();
             foreach (var m in mappings) offices.Add(m.ToDomain());
             return offices;
         }
 
-        public async Task AddAsync(Office office)
+        public async Task AddAsync(Office office, CancellationToken cancellationToken = default)
         {
             var mapping = MongoOfficeMapping.FromDomain(office);
-            await _collection.InsertOneAsync(mapping);
+            await _collection.InsertOneAsync(mapping, null, cancellationToken);
         }
 
-        public async Task UpdateAsync(Office office)
+        public async Task UpdateAsync(Office office, CancellationToken cancellationToken = default)
         {
             var mapping = MongoOfficeMapping.FromDomain(office);
-            await _collection.ReplaceOneAsync(o => o.Id == office.Id, mapping);
+            await _collection.ReplaceOneAsync(o => o.Id == office.Id, mapping, cancellationToken:cancellationToken);
         }
     }
 

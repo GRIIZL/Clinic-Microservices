@@ -52,6 +52,18 @@ services:
     networks:
       - clinic-network
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: clinic-rabbitmq
+    ports:
+      - "5672:5672" 
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+    - clinic-network
+
+
 networks:
   clinic-network:
     driver: bridge
@@ -62,3 +74,4 @@ volumes:
   auth-redis-data:
   offices-db-data:
   profiles-db-data:
+  rabbitmq_data:

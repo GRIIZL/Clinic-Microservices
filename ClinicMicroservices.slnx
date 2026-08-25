@@ -20,4 +20,10 @@
     <Project Path="src/Profiles/Profiles.Infrastructure.PostgreSql/Profiles.Infrastructure.PostgreSql.csproj" />
     <Project Path="src/Profiles/ProfilesAPI/ProfilesAPI.csproj" />
   </Folder>
+  <Folder Name="/src/Services/">
+    <Project Path="src/Services/Services.Application/Services.Application.csproj" />
+    <Project Path="src/Services/Services.Domain/Services.Domain.csproj" />
+    <Project Path="src/Services/Services.Infrastructure.MongoDB/Services.Infrastructure.MongoDB.csproj" />
+    <Project Path="src/Services/Services.ServicesAPI/Services.ServicesAPI.csproj" />
+  </Folder>
 </Solution>

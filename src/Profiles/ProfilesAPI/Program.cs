@@ -14,6 +14,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+
 
 builder.Services.AddDbContext<ProfilesDataContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -34,6 +37,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-
+app.MapControllers();
+app.UseDefaultFiles(); // Ищет index.html в wwwroot по умолчанию
+app.UseStaticFiles();  // Разрешает серверу отдавать HTML/JS файлы
 app.Run();
