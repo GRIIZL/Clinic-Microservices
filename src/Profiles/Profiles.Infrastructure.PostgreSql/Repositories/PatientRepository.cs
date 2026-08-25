@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Profiles.Application.Interfaces;
@@ -18,12 +19,12 @@ namespace Profiles.Infrastructure.PostgreSql.Repositories
             _context = context;
         }
 
-        public async Task<PatientProfile?> GetByIdAsync(Guid id)
+        public async Task<PatientProfile?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            return await _context.Patients.FindAsync(id);
+            return await _context.Patients.FindAsync(id, cancellationToken);
         }
 
-        public async Task<IEnumerable<PatientProfile>> GetAllAsync(string? searchName)
+        public async Task<IEnumerable<PatientProfile>> GetAllAsync(string? searchName, CancellationToken cancellationToken = default)
         {
             var query = _context.Patients.AsQueryable();
 
@@ -36,31 +37,31 @@ namespace Profiles.Infrastructure.PostgreSql.Repositories
                                          p.MiddleName.ToLower().Contains(name));
             }
 
-            return await query.OrderBy(p => p.LastName).ToListAsync();
+            return await query.OrderBy(p => p.LastName).ToListAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<PatientProfile>> GetUnlinkedProfilesAsync()
+        public async Task<IEnumerable<PatientProfile>> GetUnlinkedProfilesAsync(CancellationToken cancellationToken = default)
         {
             // Берем только те профили, которые еще никто не залинковал на свой аккаунт (AC-4)
-            return await _context.Patients.Where(p => !p.IsLinkedToAccount).ToListAsync();
+            return await _context.Patients.Where(p => !p.IsLinkedToAccount).ToListAsync(cancellationToken);
         }
 
-        public async Task AddAsync(PatientProfile profile)
+        public async Task AddAsync(PatientProfile profile, CancellationToken cancellationToken = default)
         {
-            await _context.Patients.AddAsync(profile);
-            await _context.SaveChangesAsync();
+            await _context.Patients.AddAsync(profile, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task UpdateAsync(PatientProfile profile)
+        public async Task UpdateAsync(PatientProfile profile, CancellationToken cancellationToken = default)
         {
             _context.Patients.Update(profile);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task DeleteAsync(PatientProfile profile)
+        public async Task DeleteAsync(PatientProfile profile, CancellationToken cancellationToken = default)
         {
             _context.Patients.Remove(profile);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
         }
     }
 }
