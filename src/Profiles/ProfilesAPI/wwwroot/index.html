@@ -384,7 +384,7 @@
             } catch (err) { console.error(err); }
         }
 
-        function searchPatients() {
+function searchPatients() {
             const val = document.getElementById('patientSearchInput').value;
             loadPatients(val);
         }
@@ -392,6 +392,16 @@
             document.getElementById('patientSearchInput').value = '';
             document.getElementById('patientSearchInput').style.borderColor = '#cbd5e1';
             loadPatients();
+        }
+
+        // ПРОСМОТР ПРОФИЛЯ ДОКТОРА (US-17)
+        async function viewDoctorProfile(id) {
+            try {
+                const response = await fetch(`${API_BASE}/doctors/${id}`);
+                if (!response.ok) { alert('Doctor profile not found.'); return; }
+                const d = await response.json();
+                alert(`Доктор: ${d.lastName} ${d.firstName} ${d.middleName}\nСпециализация: ${d.specialization}\nСтаж: ${d.experience} лет\nСтатус: ${d.status}\nEmail: ${d.email}`);
+            } catch (err) { console.error(err); alert('Network error while loading doctor profile.'); }
         }
 
         // УДАЛЕНИЕ ПАЦИЕНТА С ДИАЛОГОМ (US-48)
@@ -417,14 +427,14 @@
                 }
 
                 const doctors = await response.json();
-                doctors.forEach(d => {
+doctors.forEach(d => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td><strong>${d.lastName}</strong> ${d.firstName}</td>
                         <td>${d.specialization}</td>
                         <td><span class="status-tag ${d.status === 'At work' ? 'active' : 'other'}">${d.status}</span></td>
                         <td>${d.experience} л.</td>
-                        <td><button class="btn btn-secondary" style="padding:4px 10px; font-size:12px;" onclick="alert('ID доктора: ' + d.id)">Профиль</button></td>
+                        <td><button class="btn btn-secondary" style="padding:4px 10px; font-size:12px;" onclick='viewDoctorProfile("${d.id}")'>Профиль</button></td>
                     `;
                     tbody.appendChild(row);
                 });
@@ -454,12 +464,7 @@
         }
 
         async function savePatient() {
-            const firstName = document.getElementById('pFirstName').value;
-            const lastName = document.getElementById('pLastName').value;
-            const middleName = document.getElementById('pMiddleName').value;
-            const phoneNumber = document.getElementById('pPhone').value;
-            const dateOfBirth = document.getElementById('pDob').value;
-            const payload = { firstName, lastName, middleName, phoneNumber, dateOfBirth };
+            const payload = getPatientPayload();
             const response = await fetch(`${API_BASE}/patients`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -469,15 +474,61 @@
             // ЕСЛИ ВЕС СОВПАДЕНИЙ >= 13 — ВКЛЮЧАЕТСЯ ОКНО МЭТЧИНГА ПО ТЗ (AC-6)
             if (data.matchFound) {
                 pendingMatchProfileId = data.existingProfileId;
-                document.getElementById('matchInfoText').innerHTML = `ФИО: ${data.existingData.lastName} ${data.existingData.firstName} <br>Телефон: ${data.existingData.phoneNumber}`;
+                document.getElementById('matchInfoText').innerHTML = `ФИО: ${data.existingProfileData.lastName} ${data.existingProfileData.firstName} <br>Телефон: ${data.existingProfileData.phoneNumber}`;
                 document.getElementById('matchDialog').style.display = 'flex';
             }
             else {
                 closeModal(); loadPatients();
             }
         }
-        // Кнопка "No, it's not me" — принудительно создаем вторую запись (Бэкенд это поддерживает)
-        function forceCreateProfile() { document.getElementById('matchDialog').style.display = 'none'; alert("Администратор принял решение создать дубликат карточки."); closeModal(); }
+// Кнопка "No, it's not me" — принудительно создаем вторую запись
+        async function forceCreateProfile() {
+            document.getElementById('matchDialog').style.display = 'none';
+            const payload = getPatientPayload();
+            try {
+                const response = await fetch(`${API_BASE}/patients`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) {
+                    closeModal(); loadPatients();
+                } else {
+                    const data = await response.json();
+                    alert(data.message || 'Could not create the duplicate profile.');
+                }
+            } catch (err) { console.error(err); alert('Network error while creating profile.'); }
+        }
+
+        // Кнопка "Yes, it's me" — привязка найденного профиля к аккаунту (AC-7)
+        async function executeLinkAccount() {
+            if (!pendingMatchProfileId) { document.getElementById('matchDialog').style.display = 'none'; return; }
+            const accountId = prompt('Enter your account ID (Guid):'); // Временное решение — в реальном приложении берём из контекста авторизации
+            if (!accountId) { document.getElementById('matchDialog').style.display = 'none'; closeModal(); return; }
+            try {
+                const response = await fetch(`${API_BASE}/patients/${pendingMatchProfileId}/link-account?accountId=${encodeURIComponent(accountId)}`, {
+                    method: 'POST'
+                });
+                document.getElementById('matchDialog').style.display = 'none';
+                if (response.ok) {
+                    closeModal(); loadPatients();
+                } else {
+                    const data = await response.json();
+                    alert(data.message || 'Could not link account.');
+                }
+            } catch (err) { console.error(err); alert('Network error while linking account.'); }
+        }
+
+        // Хелпер: собрать payload из формы пациента
+        function getPatientPayload() {
+            return {
+                firstName: document.getElementById('pFirstName').value,
+                lastName: document.getElementById('pLastName').value,
+                middleName: document.getElementById('pMiddleName').value,
+                phoneNumber: document.getElementById('pPhone').value,
+                dateOfBirth: document.getElementById('pDob').value
+            };
+        }
         // ОНБЛУР ВАЛИДАЦИЯ С КРАСНЫМИ РАМКАМИ ПО ТЗ
         function setupValidation(inpId, errId) {const input = document.getElementById(inpId);input.addEventListener('blur', () => {const err = document.getElementById(errId);if (!input.value.trim()) { input.classList.add('error-field'); err.style.display = 'block'; }else { input.classList.remove('error-field'); err.style.display = 'none'; }validateBtn();});input.addEventListener('input', () => { hasChanges = true; validateBtn(); });}
         function validateBtn() {const f = document.getElementById('pFirstName').value;const l = document.getElementById('pLastName').value;const p = document.getElementById('pPhone').value;const d = document.getElementById('pDob').value;document.getElementById('savePatientBtn').disabled = (!f || !l || !p || !d);}

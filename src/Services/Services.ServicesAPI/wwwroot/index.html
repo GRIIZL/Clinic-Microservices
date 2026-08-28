@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Innowise Clinic - Services Portal</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #0f172a;
+            margin-bottom: 25px;
+            font-size: 2.2rem;
+            text-align: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .section-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 10px;
+        }
+
+        .section-header h2 {
+            margin: 0;
+            color: #1e293b;
+            font-size: 20px;
+        }
+
+        /* КНОПКИ */
+        .btn {
+            padding: 9px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #1a73e8;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1557b5;
+        }
+
+        .btn-primary:disabled {
+            background: #cbd5e1;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        /* СПЕЦИАЛИЗАЦИИ */
+        .spec-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            width: 100%;
+        }
+
+        .spec-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid #1a73e8;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s;
+        }
+
+        .spec-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .spec-card.inactive {
+            border-left-color: #94a3b8;
+            opacity: 0.8;
+        }
+
+        .spec-card h3 {
+            margin: 0 0 10px 0;
+            color: #1e293b;
+            font-size: 18px;
+        }
+
+        .spec-info {
+            font-size: 14px;
+            color: #475569;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .status-badge {
+            inline-size: max-content;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .status-badge.active {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .status-badge.inactive {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        /* УСЛУГИ ВНУТРИ СПЕЦИАЛИЗАЦИИ */
+        .services-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .services-table th {
+            background: #f8fafc;
+            text-align: left;
+            padding: 10px;
+            color: #64748b;
+            border-bottom: 2px solid #edf2f7;
+        }
+
+        .services-table td {
+            padding: 10px;
+            border-bottom: 1px solid #edf2f7;
+            color: #334155;
+        }
+
+        .cat-tag {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .service-status {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .service-status.active {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .service-status.inactive {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        /* МОДАЛКИ */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-card {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            width: 360px;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            color: #94a3b8;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: #475569;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #4a5568;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #cbd5e1;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #1a73e8;
+            outline: none;
+        }
+
+        .error-msg {
+            color: #dc2626;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 5px;
+        }
+
+        .radio-group label {
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        .radio-group input {
+            width: auto;
+        }
+
+        .dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .dialog-box {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            width: 320px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .dialog-box p {
+            margin: 0 0 20px 0;
+            font-weight: 500;
+            color: #1e293b;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Портал Управления Услугами Клиники</h1>
+
+    <div class="container">
+
+        <!-- БЛОК 1: СПЕЦИАЛИЗАЦИИ -->
+        <div class="section-card">
+            <div class="section-header">
+                <h2>Специализации (US-36 / US-40)</h2>
+                <button class="btn btn-primary" onclick="openCreateSpecModal()">+ Создать специализацию</button>
+            </div>
+            <div class="spec-grid" id="specGrid"></div>
+        </div>
+
+        <!-- БЛОК 2: УСЛУГИ ВЫБРАННОЙ СПЕЦИАЛИЗАЦИИ -->
+        <div class="section-card" id="servicesSection" style="display: none;">
+            <div class="section-header">
+                <h2 id="servicesSectionTitle">Услуги специализации</h2>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn btn-secondary" onclick="closeServicesView()">← Назад</button>
+                    <button class="btn btn-primary" onclick="openCreateServiceModal()">+ Добавить услугу</button>
+                </div>
+            </div>
+            <table class="services-table">
+                <thead>
+                    <tr>
+                        <th>Название</th>
+                        <th>Категория</th>
+                        <th>Цена</th>
+                        <th>Статус</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="servicesTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА: СПЕЦИАЛИЗАЦИЯ (СОЗДАНИЕ/РЕДАКТИРОВАНИЕ) -->
+    <div id="specModal" class="modal-overlay">
+        <div class="modal-card">
+            <span class="close-btn" onclick="handleSpecCancelClick()">&times;</span>
+            <h2 id="specModalTitle">Создать специализацию</h2>
+            <input type="hidden" id="specId">
+
+            <div class="form-group">
+                <label>Название *</label>
+                <input type="text" id="specName" placeholder="Например, Терапия">
+                <div id="specNameError" class="error-msg">Please, enter the name</div>
+            </div>
+            <div class="form-group">
+                <label>Статус *</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="specStatus" value="Active" checked> Active</label>
+                    <label><input type="radio" name="specStatus" value="Inactive"> Inactive</label>
+                </div>
+            </div>
+
+            <div class="btn-group" style="display: flex; gap: 10px; margin-top: 25px;">
+                <button class="btn btn-primary" id="saveSpecBtn" onclick="saveSpecialization()" disabled>Сохранить</button>
+                <button class="btn btn-secondary" onclick="handleSpecCancelClick()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА: УСЛУГА (СОЗДАНИЕ/РЕДАКТИРОВАНИЕ) -->
+    <div id="serviceModal" class="modal-overlay">
+        <div class="modal-card">
+            <span class="close-btn" onclick="closeServiceModal()">&times;</span>
+            <h2 id="serviceModalTitle">Добавить услугу</h2>
+            <input type="hidden" id="serviceId">
+
+            <div class="form-group">
+                <label>Название *</label>
+                <input type="text" id="serviceName" placeholder="Например, Приём терапевта">
+                <div id="serviceNameError" class="error-msg">Please, enter the service name</div>
+            </div>
+            <div class="form-group">
+                <label>Цена *</label>
+                <input type="number" id="servicePrice" step="0.01" min="0.01" placeholder="50.00">
+                <div id="servicePriceError" class="error-msg">Please, enter the price</div>
+            </div>
+            <div class="form-group">
+                <label>Категория *</label>
+                <select id="serviceCategory">
+                    <option value="Consultations">Consultations</option>
+                    <option value="Diagnostics">Diagnostics</option>
+                    <option value="Analyses">Analyses</option>
+                </select>
+                <div id="serviceCategoryError" class="error-msg">Please, choose the service category</div>
+            </div>
+            <div class="form-group">
+                <label>Статус *</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="serviceStatus" value="Active" checked> Active</label>
+                    <label><input type="radio" name="serviceStatus" value="Inactive"> Inactive</label>
+                </div>
+            </div>
+
+            <div class="btn-group" style="display: flex; gap: 10px; margin-top: 25px;">
+                <button class="btn btn-primary" id="saveServiceBtn" onclick="saveService()" disabled>Сохранить</button>
+                <button class="btn btn-secondary" onclick="closeServiceModal()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ДИАЛОГ ПОДТВЕРЖДЕНИЯ СМЕНЫ СТАТУСА СПЕЦИАЛИЗАЦИИ -->
+    <div id="statusDialog" class="dialog-overlay">
+        <div class="dialog-box">
+            <p id="statusDialogText">Изменить статус специализации?</p>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-primary" style="flex:1;" onclick="confirmStatusChange()">Да</button>
+                <button class="btn btn-secondary" style="flex:1;" onclick="document.getElementById('statusDialog').style.display='none'">Нет</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ДИАЛОГ ОТМЕНЫ (СПЕЦИАЛИЗАЦИЯ) -->
+    <div id="specCancelDialog" class="dialog-overlay">
+        <div class="dialog-box">
+            <p>Do you really want to cancel? Changes will not be saved.</p>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" style="flex:1;" onclick="confirmSpecCancel(true)">Yes</button>
+                <button class="btn btn-primary" style="flex:1;" onclick="confirmSpecCancel(false)">No</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5285/api/specializations';
+        let isSpecEditMode = false;
+        let isServiceEditMode = false;
+        let currentSpecId = null;
+        let pendingStatusChange = null;
+        let specHasChanges = false;
+        let serviceHasChanges = false;
+
+        document.addEventListener('DOMContentLoaded', fetchSpecializations);
+
+        // ============ СПЕЦИАЛИЗАЦИИ ============
+
+        async function fetchSpecializations() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error('Failed to load specializations');
+                const specializations = await response.json();
+                const grid = document.getElementById('specGrid');
+                grid.innerHTML = '';
+
+                if (specializations.length === 0) {
+                    grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #64748b;">Специализаций пока нет. Создайте первую!</p>';
+                    return;
+                }
+
+                specializations.forEach(spec => {
+                    const card = document.createElement('div');
+                    card.className = `spec-card ${spec.status === 'Inactive' ? 'inactive' : ''}`;
+                    card.innerHTML = `
+                        <div>
+                            <div class="status-badge ${spec.status === 'Active' ? 'active' : 'inactive'}">${spec.status}</div>
+                            <h3>${spec.name}</h3>
+                            <div class="spec-info">
+                                <strong>Услуг:</strong> ${spec.services ? spec.services.length : 0}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="viewServices('${spec.id}', '${spec.name}')">Услуги</button>
+                            <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="openEditSpecModal('${spec.id}')">Edit</button>
+                            <button class="btn ${spec.status === 'Active' ? 'btn-danger' : 'btn-primary'}" style="padding: 6px 12px; font-size: 12px; flex: 1;" onclick="askToggleSpecStatus('${spec.id}', '${spec.status}')">
+                                ${spec.status === 'Active' ? 'Deactivate' : 'Activate'}
+                            </button>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (err) { console.error(err); alert('Ошибка загрузки специализаций.'); }
+        }
+
+        function openCreateSpecModal() {
+            isSpecEditMode = false; specHasChanges = false;
+            document.getElementById('specModalTitle').innerText = "Создать специализацию";
+            document.getElementById('specId').value = '';
+            clearSpecForm(); resetSpecValidation();
+            document.getElementById('specModal').style.display = 'flex';
+        }
+
+        async function openEditSpecModal(id) {
+            isSpecEditMode = true; specHasChanges = false;
+            document.getElementById('specModalTitle').innerText = "Редактировать специализацию";
+            resetSpecValidation();
+            try {
+                const response = await fetch(`${API_URL}/${id}`);
+                if (!response.ok) throw new Error('Failed to load specialization');
+                const spec = await response.json();
+                document.getElementById('specId').value = spec.id;
+                document.getElementById('specName').value = spec.name;
+                document.getElementsByName('specStatus').forEach(r => r.checked = (r.value === spec.status));
+                document.getElementById('specModal').style.display = 'flex';
+            } catch (err) { console.error(err); alert('Ошибка загрузки специализации.'); }
+        }
+
+        function closeSpecModal() { document.getElementById('specModal').style.display = 'none'; }
+        function handleSpecCancelClick() { if (specHasChanges) { document.getElementById('specCancelDialog').style.display = 'flex'; } else { closeSpecModal(); } }
+        function confirmSpecCancel(shouldCancel) { document.getElementById('specCancelDialog').style.display = 'none'; if (shouldCancel) closeSpecModal(); }
+
+        async function saveSpecialization() {
+            if (!validateSpecForm()) return;
+            const id = document.getElementById('specId').value;
+            const name = document.getElementById('specName').value.trim();
+            let status = 'Active';
+            document.getElementsByName('specStatus').forEach(r => { if (r.checked) status = r.value; });
+
+            const payload = { name, status };
+            const url = isSpecEditMode ? `${API_URL}/${id}` : API_URL;
+            const method = isSpecEditMode ? 'PUT' : 'POST';
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) { closeSpecModal(); fetchSpecializations(); }
+                else {
+                    const data = await response.json();
+                    alert(data.message || 'Ошибка при сохранении специализации.');
+                }
+            } catch (err) { console.error(err); alert('Ошибка сети при сохранении.'); }
+        }
+
+        function askToggleSpecStatus(id, currentStatus) {
+            const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
+            pendingStatusChange = { id, newStatus };
+            document.getElementById('statusDialogText').innerText =
+                `Изменить статус специализации на '${newStatus}'?`;
+            document.getElementById('statusDialog').style.display = 'flex';
+        }
+
+        async function confirmStatusChange() {
+            document.getElementById('statusDialog').style.display = 'none';
+            if (!pendingStatusChange) return;
+            const { id, newStatus } = pendingStatusChange;
+            try {
+                const response = await fetch(`${API_URL}/${id}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                if (response.ok) { fetchSpecializations(); }
+                else {
+                    const data = await response.json();
+                    alert(data.message || 'Не удалось изменить статус.');
+                }
+            } catch (err) { console.error(err); alert('Ошибка сети при изменении статуса.'); }
+        }
+
+        function validateSpecForm() {
+            const name = document.getElementById('specName').value.trim();
+            const err = document.getElementById('specNameError');
+            if (!name) { document.getElementById('specName').style.borderColor = '#dc2626'; err.style.display = 'block'; return false; }
+            return true;
+        }
+
+        function clearSpecForm() {
+            document.getElementById('specName').value = '';
+            document.getElementById('saveSpecBtn').disabled = true;
+        }
+
+        function resetSpecValidation() {
+            document.getElementById('specName').style.borderColor = '#cbd5e1';
+            document.getElementById('specNameError').style.display = 'none';
+        }
+
+        document.getElementById('specName').addEventListener('input', () => {
+            specHasChanges = true;
+            const v = document.getElementById('specName').value.trim();
+            document.getElementById('saveSpecBtn').disabled = !v;
+            if (v) { document.getElementById('specName').style.borderColor = '#16a34a'; document.getElementById('specNameError').style.display = 'none'; }
+        });
+        document.getElementsByName('specStatus').forEach(r => r.addEventListener('change', () => specHasChanges = true));
+
+        // ============ УСЛУГИ ============
+
+        function viewServices(specId, specName) {
+            currentSpecId = specId;
+            document.getElementById('servicesSectionTitle').innerText = `Услуги: ${specName}`;
+            document.getElementById('servicesSection').style.display = 'block';
+            loadServices();
+        }
+
+        function closeServicesView() {
+            document.getElementById('servicesSection').style.display = 'none';
+            currentSpecId = null;
+        }
+
+        async function loadServices() {
+            if (!currentSpecId) return;
+            try {
+                const response = await fetch(`${API_URL}/${currentSpecId}`);
+                if (!response.ok) throw new Error('Failed to load services');
+                const spec = await response.json();
+                const services = spec.services || [];
+                const tbody = document.getElementById('servicesTableBody');
+                tbody.innerHTML = '';
+
+                if (services.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#64748b;">Услуг пока нет. Добавьте первую!</td></tr>';
+                    return;
+                }
+
+                services.forEach(s => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${s.name}</strong></td>
+                        <td><span class="cat-tag">${s.categoryName}</span></td>
+                        <td>${s.price} BYN</td>
+                        <td><span class="service-status ${s.status === 'Active' ? 'active' : 'inactive'}">${s.status}</span></td>
+                        <td>
+                            <button class="btn btn-secondary" style="padding:4px 10px; font-size:12px;" onclick='openEditServiceModal("${s.id}")'>Edit</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (err) { console.error(err); alert('Ошибка загрузки услуг.'); }
+        }
+
+        function openCreateServiceModal() {
+            isServiceEditMode = false; serviceHasChanges = false;
+            document.getElementById('serviceModalTitle').innerText = "Добавить услугу";
+            document.getElementById('serviceId').value = '';
+            clearServiceForm(); resetServiceValidation();
+            document.getElementById('serviceModal').style.display = 'flex';
+        }
+
+        async function openEditServiceModal(serviceId) {
+            isServiceEditMode = true; serviceHasChanges = false;
+            document.getElementById('serviceModalTitle').innerText = "Редактировать услугу";
+            resetServiceValidation();
+            try {
+                const response = await fetch(`${API_URL}/${currentSpecId}/services/${serviceId}`);
+                if (!response.ok) throw new Error('Failed to load service');
+                const s = await response.json();
+                document.getElementById('serviceId').value = s.id;
+                document.getElementById('serviceName').value = s.name;
+                document.getElementById('servicePrice').value = s.price;
+                document.getElementById('serviceCategory').value = s.categoryName;
+                document.getElementsByName('serviceStatus').forEach(r => r.checked = (r.value === s.status));
+                document.getElementById('serviceModal').style.display = 'flex';
+            } catch (err) { console.error(err); alert('Ошибка загрузки услуги.'); }
+        }
+
+        function closeServiceModal() { document.getElementById('serviceModal').style.display = 'none'; }
+
+        async function saveService() {
+            if (!validateServiceForm()) return;
+            const id = document.getElementById('serviceId').value;
+            const name = document.getElementById('serviceName').value.trim();
+            const price = parseFloat(document.getElementById('servicePrice').value);
+            const categoryName = document.getElementById('serviceCategory').value;
+            let status = 'Active';
+            document.getElementsByName('serviceStatus').forEach(r => { if (r.checked) status = r.value; });
+
+            const payload = { name, price, categoryName, status };
+            const url = isServiceEditMode
+                ? `${API_URL}/${currentSpecId}/services/${id}`
+                : `${API_URL}/${currentSpecId}/services`;
+            const method = isServiceEditMode ? 'PUT' : 'POST';
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) { closeServiceModal(); loadServices(); fetchSpecializations(); }
+                else {
+                    const data = await response.json();
+                    alert(data.message || 'Ошибка при сохранении услуги.');
+                }
+            } catch (err) { console.error(err); alert('Ошибка сети при сохранении.'); }
+        }
+
+        function validateServiceForm() {
+            const name = document.getElementById('serviceName').value.trim();
+            const price = parseFloat(document.getElementById('servicePrice').value);
+            let ok = true;
+            const nameErr = document.getElementById('serviceNameError');
+            const priceErr = document.getElementById('servicePriceError');
+            if (!name) { document.getElementById('serviceName').style.borderColor = '#dc2626'; nameErr.style.display = 'block'; ok = false; }
+            if (!price || price <= 0) { document.getElementById('servicePrice').style.borderColor = '#dc2626'; priceErr.style.display = 'block'; ok = false; }
+            return ok;
+        }
+
+        function clearServiceForm() {
+            document.getElementById('serviceName').value = '';
+            document.getElementById('servicePrice').value = '';
+            document.getElementById('serviceCategory').value = 'Consultations';
+            document.getElementById('saveServiceBtn').disabled = true;
+        }
+
+        function resetServiceValidation() {
+            ['serviceName', 'servicePrice'].forEach(id => document.getElementById(id).style.borderColor = '#cbd5e1');
+            ['serviceNameError', 'servicePriceError'].forEach(id => document.getElementById(id).style.display = 'none');
+        }
+
+        document.getElementById('serviceName').addEventListener('input', () => { serviceHasChanges = true; checkServiceValidity(); });
+        document.getElementById('servicePrice').addEventListener('input', () => { serviceHasChanges = true; checkServiceValidity(); });
+        document.getElementById('serviceCategory').addEventListener('change', () => serviceHasChanges = true);
+        document.getElementsByName('serviceStatus').forEach(r => r.addEventListener('change', () => serviceHasChanges = true));
+
+        function checkServiceValidity() {
+            const name = document.getElementById('serviceName').value.trim();
+            const price = parseFloat(document.getElementById('servicePrice').value);
+            document.getElementById('saveServiceBtn').disabled = (!name || !price || price <= 0);
+        }
+    </script>
+</body>
+
+</html>

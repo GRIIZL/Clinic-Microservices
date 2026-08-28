@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using Auth.Infrastructure.Redis;
+using Auth.Infrastructure.RabbitMQ;
 using AuthorizationAPI.Services;
 using Microsoft.EntityFrameworkCore;
 using Auth.Application.Interfaces;
@@ -51,6 +52,9 @@ builder.Services.AddStackExchangeRedisCache(options =>
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<ITokenBlacklistService, TokenBlacklistService>();
+// Шина сообщений: реализация Publisher'а регистрируется как Singleton —
+// переиспользует одно соединение RabbitMQ на всё время жизни приложения
+builder.Services.AddSingleton<IEventPublisher, RabbitMqPublisher>();
 builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();

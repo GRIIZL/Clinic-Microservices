@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Auth.Application.Interfaces;
 using Auth.Application.Models;
 using Auth.Domain;
+using Shared.Events;
 
 namespace Auth.Application.Services
 {
@@ -13,15 +14,18 @@ namespace Auth.Application.Services
     {
         private readonly IAccountRepository _accountRepository;
         private readonly ITokenService _tokenService;
+        private readonly IEventPublisher _eventPublisher;
         private readonly ILogger<AuthService> _logger;
 
         public AuthService(
             IAccountRepository accountRepository,
             ITokenService tokenService,
+            IEventPublisher eventPublisher,
             ILogger<AuthService> logger)
         {
             _accountRepository = accountRepository;
             _tokenService = tokenService;
+            _eventPublisher = eventPublisher;
             _logger = logger;
         }
 
@@ -48,7 +52,18 @@ namespace Auth.Application.Services
                 VerificationTokenExpires = DateTime.UtcNow.AddHours(24)
             };
 
-            await _accountRepository.AddAsync(newAccount, cancellationToken);
+await _accountRepository.AddAsync(newAccount, cancellationToken);
+
+            // Публикуем событие в RabbitMQ: другие микросервисы (Profiles) узнают о новой регистрации
+            // и смогут создать/связать профиль пациента (asynchronous, eventual consistency).
+            await _eventPublisher.PublishAsync(new UserRegisteredEvent
+            {
+                UserId = newAccount.Id,
+                Email = newAccount.Email,
+                PhoneNumber = newAccount.PhoneNumber,
+                Role = newAccount.Role,
+                CreatedAt = DateTime.UtcNow
+            }, cancellationToken);
 
             var confirmationLink = $"http://localhost:api/auth/verify?token={verificationToken}";
             _logger.LogInformation($"\n===============================================\n" +

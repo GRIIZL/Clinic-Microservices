@@ -3,10 +3,11 @@
     <Project Path="src/Auth/Auth.Application/Auth.Application.csproj" />
     <Project Path="src/Auth/Auth.Domain/Auth.Domain.csproj" />
     <Project Path="src/Auth/Auth.Infrastructure.PostgreSql/Auth.Infrastructure.PostgreSql.csproj" />
+    <Project Path="src/Auth/Auth.Infrastructure.RabbitMQ/Auth.Infrastructure.RabbitMQ.csproj" />
     <Project Path="src/Auth/Auth.Infrastructure.Redis/Auth.Infrastructure.Redis.csproj" />
     <Project Path="src/Auth/AuthorizationAPI/AuthorizationAPI.csproj" />
   </Folder>
-  
+
   <Folder Name="/Offices/">
     <Project Path="src/Offices/Offices.Application/Offices.Application.csproj" />
     <Project Path="src/Offices/Offices.Domain/Offices.Domain.csproj" />
@@ -18,6 +19,7 @@
     <Project Path="src/Profiles/Profiles.Application/Profiles.Application.csproj" />
     <Project Path="src/Profiles/Profiles.Domain/Profiles.Domain.csproj" />
     <Project Path="src/Profiles/Profiles.Infrastructure.PostgreSql/Profiles.Infrastructure.PostgreSql.csproj" />
+    <Project Path="src/Profiles/Profiles.Infrastructure.RabbitMQ/Profiles.Infrastructure.RabbitMQ.csproj" />
     <Project Path="src/Profiles/ProfilesAPI/ProfilesAPI.csproj" />
   </Folder>
   <Folder Name="/src/Services/">
@@ -25,5 +27,8 @@
     <Project Path="src/Services/Services.Domain/Services.Domain.csproj" />
     <Project Path="src/Services/Services.Infrastructure.MongoDB/Services.Infrastructure.MongoDB.csproj" />
     <Project Path="src/Services/Services.ServicesAPI/Services.ServicesAPI.csproj" />
+  </Folder>
+  <Folder Name="/Shared/">
+    <Project Path="src/Shared/Shared.Events/Shared.Events.csproj" />
   </Folder>
 </Solution>

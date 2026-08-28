@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using Profiles.Infrastructure.PostgreSql;
+using Profiles.Infrastructure.RabbitMQ;
 using ProfilesAPI.Controllers;
 using Profiles.Application.Services;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +28,10 @@ builder.Services.AddScoped<IReceptionistRepository, ReceptionistRepository>();
 builder.Services.AddScoped<PatientService>();
 builder.Services.AddScoped<DoctorService>();
 builder.Services.AddScoped<ReceptionistService>();
+builder.Services.AddScoped<IPatientEventHandlingService, PatientEventHandlingService>();
+
+// Фоновый подписчик RabbitMQ: стартует вместе с приложением и получает события из Auth
+builder.Services.AddHostedService<RabbitMqConsumer>();
 
 var app = builder.Build();
 

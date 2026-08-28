@@ -179,13 +179,13 @@
                 </div>
             </div>
            
-            <button class="btn-submit" id="loginBtn" onclick="handleLogin()" disabled>Sign in</button>
+<button class="btn-submit" id="loginBtn" onclick="handleLogin()" disabled>Войти</button>
             <div id="loginResult" class="status-msg"></div>
             <div id="tokenOutput" class="token-box"></div>
             
             
             <div class="switch-link">
-                Еще нет аккаунта? <a href="javascript:void(0)" onclick="switchModal('loginModal', 'registerModal')">Sign up</a>
+                Еще нет аккаунта? <a href="javascript:void(0)" onclick="switchModal('loginModal', 'registerModal')">Зарегистрироваться</a>
             </div>
         </div>
     </div>
@@ -324,13 +324,17 @@
                     body: JSON.stringify({ email, password })
                 });
 
-                if (response.ok) {
+if (response.ok) {
     const data = await response.json();
     
     resultDiv.style.color = '#16a34a';
-    resultDiv.innerText = "You've signed in successfully!";
+    resultDiv.innerText = "Вы успешно вошли в систему!";
     
     // FIX: Читаем правильные свойства accessToken и refreshToken из ответа .NET
+    // Сохраняем токены в localStorage, чтобы не терять при перезагрузке страницы
+    localStorage.setItem('accessToken', data.accessToken);
+    localStorage.setItem('refreshToken', data.refreshToken);
+
     tokenBox.innerHTML = `
         <strong>Access Token:</strong><br>
         <span id="currentAccessToken" style="word-break: break-all; color: #1e293b;">${data.accessToken}</span>
@@ -338,7 +342,7 @@
         <strong>Refresh Token:</strong><br>
         <span style="word-break: break-all; color: #1e293b;">${data.refreshToken}</span>
         <br><br>
-        <button class="btn-submit" style="background: #dc2626; margin-top: 10px;" onclick="handleLogout()">Sign Out</button>
+        <button class="btn-submit" style="background: #dc2626; margin-top: 10px;" onclick="handleLogout()">Выйти</button>
     `;
     tokenBox.style.display = 'block';
 } else {
@@ -352,13 +356,13 @@
             }
         }
 
-                // Отправка запроса выхода (US-3 / US-35)
+// Отправка запроса выхода (US-3 / US-35)
         async function handleLogout() {
             const resultDiv = document.getElementById('loginResult');
             const tokenBox = document.getElementById('tokenOutput');
             
-            // Достаем наш Access Token, который отображен на экране
-            const accessToken = document.getElementById('currentAccessToken').innerText;
+            // Достаем наш Access Token, который отображен на экране, или из localStorage
+            const accessToken = (document.getElementById('currentAccessToken')?.innerText) || localStorage.getItem('accessToken');
 
             try {
                 const response = await fetch(`${API_URL}/sign-out`, {
@@ -372,8 +376,10 @@
 
                 if (response.ok) {
                     resultDiv.style.color = '#16a34a';
-                    resultDiv.innerText = "You've logged out successfully. Token sent to Redis Blacklist.";
+                    resultDiv.innerText = "Вы вышли из системы. Токен помещён в Redis Blacklist.";
                     tokenBox.style.display = 'none'; // Скрываем токены
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
                 } else {
                     const data = await response.json();
                     resultDiv.style.color = '#dc2626';

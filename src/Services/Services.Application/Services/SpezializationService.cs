@@ -8,14 +8,12 @@ using Services.Domain;
 
 namespace Services.Application.Services
 {
-    public class ServicesService
+public class SpezializationService
     {
         private readonly ISpecializationRepository _repository;
-        private readonly IMessageBusClient _messageBusClient;
-        public ServicesService(ISpecializationRepository repository, IMessageBusClient messageBusClient)
+        public SpezializationService(ISpecializationRepository repository)
         {
             _repository = repository;
-            _messageBusClient = messageBusClient;
         }
 
         // US-44: Получение информации о конкретной услуге внутри специализации
@@ -100,7 +98,7 @@ namespace Services.Application.Services
             return true;
         }
 
-       // Обновляем наш старый метод изменения статуса US-37, внедряя туда RabbitMQ событие!
+// Обновляем старый метод изменения статуса US-37
         public async Task<bool> ChangeStatusAsync(string id, ChangeSpecializationStatusDto dto, CancellationToken cancellationToken = default)
         {
             var specialization = await _repository.GetByIdAsync(id, cancellationToken);
@@ -117,10 +115,7 @@ namespace Services.Application.Services
                 }
             }
 
-            await _repository.UpdateAsync(specialization, cancellationToken);
-
-            // ПАРАЛЛЕЛЬНАЯ ЗАДАЧА 28: Публикуем событие изменения статуса в RabbitMQ для других микросервисов!
-            await _messageBusClient.PublishSpecializationStatusChanged(specialization.Id, specialization.Status);
+await _repository.UpdateAsync(specialization, cancellationToken);
 
             return true;
         }

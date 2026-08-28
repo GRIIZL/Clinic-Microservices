@@ -1,7 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <ItemGroup>
+<ItemGroup>
     <ProjectReference Include="..\Auth.Domain\Auth.Domain.csproj" />
+    <ProjectReference Include="..\..\Shared\Shared.Events\Shared.Events.csproj" />
   </ItemGroup>
 
   <ItemGroup>
