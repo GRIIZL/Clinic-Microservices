@@ -19,9 +19,10 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.19.1" />
   </ItemGroup>
 
-  <ItemGroup>
+<ItemGroup>
     <ProjectReference Include="..\Auth.Application\Auth.Application.csproj" />
     <ProjectReference Include="..\Auth.Infrastructure.PostgreSql\Auth.Infrastructure.PostgreSql.csproj" />
+    <ProjectReference Include="..\Auth.Infrastructure.RabbitMQ\Auth.Infrastructure.RabbitMQ.csproj" />
     <ProjectReference Include="..\Auth.Infrastructure.Redis\Auth.Infrastructure.Redis.csproj" />
   </ItemGroup>
 

@@ -285,9 +285,10 @@
                 <input type="text" id="officeHouse" placeholder="Например, 8Б">
                 <div id="houseError" class="error-msg">Please, enter the office's house number</div>
             </div>
-            <div class="form-group">
-                <label>Office Number (Optional)</label>
+<div class="form-group">
+                <label>Office Number *</label>
                 <input type="text" id="officeNumber" placeholder="Например, 404">
+                <div id="officeNumberError" class="error-msg">Please, enter the office number</div>
             </div>
             <div class="form-group">
                 <label>Registry Phone Number *</label>
@@ -403,13 +404,18 @@
         async function toggleStatus(id, currentStatus) {
             const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
             try {
-                await fetch(`${API_URL}/${id}/status`, {
+                const response = await fetch(`${API_URL}/${id}/status`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status: newStatus })
                 });
-                fetchOffices();
-            } catch (err) { console.error(err); }
+                if (response.ok) {
+                    fetchOffices();
+                } else {
+                    const data = await response.json();
+                    alert(data.message || 'Failed to change office status.');
+                }
+            } catch (err) { console.error(err); alert('Network error while changing status.'); }
         }
 
         async function saveOffice() {
@@ -448,12 +454,11 @@
             });
             input.addEventListener('input', () => { hasChanges = true; checkFormValidity(); });
         }
-        setupValidation('officeCity', 'cityError');
+setupValidation('officeCity', 'cityError');
         setupValidation('officeStreet', 'streetError');
         setupValidation('officeHouse', 'houseError');
         setupValidation('officePhone', 'phoneError');
-        document.getElementById('officeNumber').addEventListener('input', () =>
-            hasChanges = true);
+        setupValidation('officeNumber', 'officeNumberError');
         document.getElementById('officePhoto').addEventListener('input', () =>
             hasChanges = true);
         document.getElementsByName('officeStatus').forEach(r =>
@@ -464,7 +469,8 @@
             const street = document.getElementById('officeStreet').value.trim();
             const house = document.getElementById('officeHouse').value.trim();
             const phone = document.getElementById('officePhone').value.trim();
-            document.getElementById('saveBtn').disabled = (!city || !street || !house || !phone);
+            const officeNumber = document.getElementById('officeNumber').value.trim();
+            document.getElementById('saveBtn').disabled = (!city || !street || !house || !phone || !officeNumber);
         }
 
         function validateAll() {
@@ -483,9 +489,9 @@
         }
 
         function resetValidationStyles() {
-            ['officeCity', 'officeStreet', 'officeHouse', 'officePhone'].forEach(id =>
+            ['officeCity', 'officeStreet', 'officeHouse', 'officePhone', 'officeNumber'].forEach(id =>
                 document.getElementById(id).style.borderColor = '#cbd5e1');
-            ['cityError', 'streetError', 'houseError', 'phoneError'].forEach(id =>
+            ['cityError', 'streetError', 'houseError', 'phoneError', 'officeNumberError'].forEach(id =>
                 document.getElementById(id).style.display = 'none');
         }
     </script>

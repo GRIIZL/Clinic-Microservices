@@ -1,6 +1,5 @@
 using Services.Application.Interfaces;
 using Services.Application.Services;
-using Services.Infrastructure.MongoDb.Messaging;
 using Services.Infrastructure.MongoDb.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,10 +22,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddScoped<ISpecializationRepository, SpecializationRepository>();
 
 // Регистрация сервиса бизнес-логики
-builder.Services.AddScoped<ServicesService>();
-
-// Регистрация клиента шины сообщений RabbitMQ (Task #28) как Синглтон
-builder.Services.AddSingleton<IMessageBusClient, MessageBusClient>();
+builder.Services.AddScoped<SpezializationService>();
 
 var app = builder.Build();
 
@@ -38,6 +34,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowAll");
 app.UseAuthorization();
+
+app.UseDefaultFiles(); // Ищет index.html в wwwroot по умолчанию
+app.UseStaticFiles();  // Разрешает серверу отдавать HTML/JS файлы
 
 // Маппим эндпоинты контроллеров сервиса услуг
 app.MapControllers();

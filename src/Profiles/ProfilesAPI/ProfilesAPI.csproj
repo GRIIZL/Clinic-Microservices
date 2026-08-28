@@ -15,9 +15,10 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.10" />
   </ItemGroup>
 
-  <ItemGroup>
+<ItemGroup>
     <ProjectReference Include="..\Profiles.Application\Profiles.Application.csproj" />
     <ProjectReference Include="..\Profiles.Infrastructure.PostgreSql\Profiles.Infrastructure.PostgreSql.csproj" />
+    <ProjectReference Include="..\Profiles.Infrastructure.RabbitMQ\Profiles.Infrastructure.RabbitMQ.csproj" />
   </ItemGroup>
 
 </Project>

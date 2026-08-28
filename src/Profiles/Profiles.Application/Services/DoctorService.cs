@@ -33,10 +33,13 @@ namespace Profiles.Application.Services
             return await _doctorRepository.GetFilteredDoctorsAsync(query, includeAllStatuses: true, cancellationToken);
         }
 
-        // US-9: Создание профиля доктора ресепшионистом
-        public async Task<DoctorProfile?> CreateDoctorProfileByReceptionistAsync(CreateDoctorProfileDto dto, CancellationToken cancellationToken = default)
+// US-9: Создание профиля доктора ресепшионистом (AC-5: автогенерация пароля)
+        public async Task<object?> CreateDoctorProfileByReceptionistAsync(CreateDoctorProfileDto dto, CancellationToken cancellationToken = default)
         {
             if (await _doctorRepository.ExistsByEmailAsync(dto.Email, cancellationToken)) return null;
+
+            // AC-5: Генерируем случайный временный пароль для доктора
+            string generatedPassword = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(6));
 
             var doctor = new DoctorProfile
             {
@@ -46,17 +49,26 @@ namespace Profiles.Application.Services
                 MiddleName = dto.MiddleName?.Trim() ?? string.Empty,
                 Email = dto.Email.ToLower().Trim(),
                 DateOfBirth = dto.DateOfBirth,
-                Specialization = dto.Specialization?.Trim() ?? string.Empty,
+                Specialization = dto.Specialization,
                 OfficeId = dto.OfficeId,
                 CareerStartYear = dto.CareerStartYear,
-                Status = dto.Status ?? "At work",
+                Status = dto.Status,
                 PhotoUrl = dto.PhotoUrl ?? string.Empty,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
 
             await _doctorRepository.AddAsync(doctor, cancellationToken);
-            return doctor;
+
+            // AC-4: Симулируем отправку письма с логином и сгенерированным паролем
+            _logger.LogInformation($"\n==================================================\n" +
+                                   $"SENDING CREDENTIALS TO DOCTOR: {doctor.Email}\n" +
+                                   $"Your account has been created by receptionist.\n" +
+                                   $"Login: {doctor.Email}\n" +
+                                   $"Temporary Password: {generatedPassword}\n" +
+                                   $"==================================================");
+
+            return new { ProfileId = doctor.Id, TemporaryPassword = generatedPassword };
         }
 
         // US-17: Просмотр детального профиля доктора
