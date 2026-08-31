@@ -1,6 +1,7 @@
 using Services.Application.Interfaces;
 using Services.Application.Services;
 using Services.Infrastructure.MongoDb.Repositories;
+using Services.Infrastructure.RabbitMQ;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +24,9 @@ builder.Services.AddScoped<ISpecializationRepository, SpecializationRepository>(
 
 // Регистрация сервиса бизнес-логики
 builder.Services.AddScoped<SpezializationService>();
+
+// Регистрация RabbitMQ Publisher (публикует события об изменении специализаций)
+builder.Services.AddScoped<IEventPublisher, RabbitMqPublisher>();
 
 var app = builder.Build();
 

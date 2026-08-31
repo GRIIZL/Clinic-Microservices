@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-<ItemGroup>
-    <ProjectReference Include="..\Services.Domain\Services.Domain.csproj" />
+  <ItemGroup>
+    <ProjectReference Include="..\Appointments.Domain\Appointments.Domain.csproj" />
     <ProjectReference Include="..\..\Shared\Shared.Events\Shared.Events.csproj" />
   </ItemGroup>
 

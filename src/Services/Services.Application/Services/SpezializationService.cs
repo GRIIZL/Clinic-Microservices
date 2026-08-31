@@ -5,15 +5,19 @@ using System.Threading.Tasks;
 using Services.Application.Interfaces;
 using Services.Application.Models;
 using Services.Domain;
+using Shared.Events;
 
 namespace Services.Application.Services
 {
 public class SpezializationService
     {
         private readonly ISpecializationRepository _repository;
-        public SpezializationService(ISpecializationRepository repository)
+        private readonly IEventPublisher _eventPublisher;
+
+        public SpezializationService(ISpecializationRepository repository, IEventPublisher eventPublisher)
         {
             _repository = repository;
+            _eventPublisher = eventPublisher;
         }
 
         // US-44: Получение информации о конкретной услуге внутри специализации
@@ -49,6 +53,22 @@ public class SpezializationService
 
             // Перезаписываем обновленный агрегат в MongoDB
             await _repository.UpdateAsync(specialization, cancellationToken);
+
+            // Публикуем событие об изменении услуги (только если статус изменился)
+            if (service.Status != dto.Status)
+            {
+                await _eventPublisher.PublishAsync(new SpecializationChangedEvent
+                {
+                    SpecializationId = specializationId,
+                    SpecializationName = specialization.Name,
+                    Status = dto.Status,
+                    ChangeType = "ServiceStatus",
+                    ServiceId = serviceId,
+                    ServiceName = dto.Name,
+                    ChangedAt = DateTime.UtcNow
+                }, cancellationToken);
+            }
+
             return true;
         }
 
@@ -115,7 +135,17 @@ public class SpezializationService
                 }
             }
 
-await _repository.UpdateAsync(specialization, cancellationToken);
+            await _repository.UpdateAsync(specialization, cancellationToken);
+
+            // Публикуем событие об изменении специализации
+            await _eventPublisher.PublishAsync(new SpecializationChangedEvent
+            {
+                SpecializationId = id,
+                SpecializationName = specialization.Name,
+                Status = dto.Status,
+                ChangeType = "SpecializationStatus",
+                ChangedAt = DateTime.UtcNow
+            }, cancellationToken);
 
             return true;
         }

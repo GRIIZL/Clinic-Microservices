@@ -63,6 +63,20 @@ services:
     networks:
     - clinic-network
 
+  appointments-db:
+    image: postgres:16-alpine
+    container_name: clinic-appointments-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: InnowiseSuperSecretPassword123!
+      POSTGRES_DB: AppointmentsDB
+    ports:
+      - "5434:5432" # Локальный внешний порт 5434
+    volumes:
+      - appointments-db-data:/var/lib/postgresql/data
+    networks:
+      - clinic-network
+
 
 networks:
   clinic-network:
