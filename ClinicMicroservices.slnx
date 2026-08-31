@@ -15,6 +15,12 @@
     <Project Path="src/Offices/OfficesAPI/OfficesAPI.csproj" />
   </Folder>
   <Folder Name="/src/" />
+  <Folder Name="/src/Appointments/">
+    <Project Path="src/Appointments/Appointments.Application/Appointments.Application.csproj" />
+    <Project Path="src/Appointments/Appointments.Domain/Appointments.Domain.csproj" />
+    <Project Path="src/Appointments/Appointments.Infrastructure.PostgreSql/Appointments.Infrastructure.PostgreSql.csproj" />
+    <Project Path="src/Appointments/AppointmentsAPI/AppointmentsAPI.csproj" />
+  </Folder>
   <Folder Name="/src/Profiles/">
     <Project Path="src/Profiles/Profiles.Application/Profiles.Application.csproj" />
     <Project Path="src/Profiles/Profiles.Domain/Profiles.Domain.csproj" />
