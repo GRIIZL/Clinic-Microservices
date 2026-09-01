@@ -79,19 +79,11 @@ namespace Appointments.Application.Services
 
             try
             {
-                // Получаем все активные записи (это упрощённая версия — в реальности нужен метод по специализации)
-                var allAppointments = await _appointmentRepository.GetAllAsync(cancellationToken);
+                // Фильтрация происходит на стороне БД (см. репозиторий), а не в памяти
+                var activeAppointments = await _appointmentRepository.GetActiveBySpecializationIdAsync(evt.SpecializationId, cancellationToken);
+                var appointmentsToCancel = activeAppointments.ToList();
 
-                // Фильтруем активные записи (упрощённая логика — в реальности нужно фильтровать по SpecializationId)
-                var activeAppointments = new List<Appointment>();
-                foreach (var apt in allAppointments)
-                {
-                    // В реальном коде здесь был бы фильтр по apt.SpecializationId == evt.SpecializationId
-                    // и apt.Status == "Active"
-                    activeAppointments.Add(apt);
-                }
-
-                if (activeAppointments.Count == 0)
+                if (appointmentsToCancel.Count == 0)
                 {
                     _logger.LogInformation(
                         "[Appointments] No active appointments found for specialization '{SpecializationId}'.",
@@ -99,22 +91,16 @@ namespace Appointments.Application.Services
                     return;
                 }
 
-                _logger.LogInformation(
-                    "[Appointments] Found {Count} active appointments to cancel for specialization '{SpecializationId}'.",
-                    activeAppointments.Count,
-                    evt.SpecializationId);
-
-                // TODO: Реализовать отмену записей через репозиторий
-                // foreach (var apt in activeAppointments)
-                // {
-                //     apt.Status = "Canceled";
-                //     apt.UpdatedAt = DateTime.UtcNow;
-                //     await _appointmentRepository.UpdateAsync(apt, cancellationToken);
-                // }
+                foreach (var appointment in appointmentsToCancel)
+                {
+                    appointment.Status = "Canceled";
+                    appointment.UpdatedAt = DateTime.UtcNow;
+                    await _appointmentRepository.UpdateAsync(appointment, cancellationToken);
+                }
 
                 _logger.LogInformation(
                     "[Appointments] Cancelled {Count} appointments for specialization '{SpecializationId}'.",
-                    activeAppointments.Count,
+                    appointmentsToCancel.Count,
                     evt.SpecializationId);
             }
             catch (Exception ex)
@@ -123,23 +109,54 @@ namespace Appointments.Application.Services
                     ex,
                     "[Appointments] Error canceling appointments for specialization '{SpecializationId}'.",
                     evt.SpecializationId);
-                throw;
+                throw; // пробрасываем наверх: consumer сделает nack, и сообщение вернётся в очередь (retry)
             }
         }
 
         /// <summary>
         /// Сценарий: конкретная услуга стала Inactive.
-        /// Блокируем запись на эту услугу.
+        /// Отменяем активные записи, ссылающиеся на эту услугу.
         /// </summary>
         private async Task HandleServiceInactiveAsync(SpecializationChangedEvent evt, CancellationToken cancellationToken)
         {
             _logger.LogInformation(
-                "[Appointments] Service '{ServiceName}' (Id: {ServiceId}) is now INACTIVE. Blocking future appointments...",
+                "[Appointments] Service '{ServiceName}' (Id: {ServiceId}) is now INACTIVE. Canceling related appointments...",
                 evt.ServiceName,
                 evt.ServiceId);
 
-            // TODO: Реализовать блокировку услуги в расписании
-            // Можно создать флаг в Appointment или добавить запись в таблицу BlockedServices
+            try
+            {
+                var activeAppointments = await _appointmentRepository.GetActiveByServiceIdAsync(evt.ServiceId!, cancellationToken);
+                var appointmentsToCancel = activeAppointments.ToList();
+
+                if (appointmentsToCancel.Count == 0)
+                {
+                    _logger.LogInformation(
+                        "[Appointments] No active appointments found for service '{ServiceId}'.",
+                        evt.ServiceId);
+                    return;
+                }
+
+                foreach (var appointment in appointmentsToCancel)
+                {
+                    appointment.Status = "Canceled";
+                    appointment.UpdatedAt = DateTime.UtcNow;
+                    await _appointmentRepository.UpdateAsync(appointment, cancellationToken);
+                }
+
+                _logger.LogInformation(
+                    "[Appointments] Cancelled {Count} appointments for service '{ServiceId}'.",
+                    appointmentsToCancel.Count,
+                    evt.ServiceId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "[Appointments] Error canceling appointments for service '{ServiceId}'.",
+                    evt.ServiceId);
+                throw;
+            }
         }
     }
 }

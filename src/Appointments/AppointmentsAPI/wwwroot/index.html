@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Innowise Clinic - Appointments Portal</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #0f172a;
+            margin-bottom: 25px;
+            font-size: 2.2rem;
+            text-align: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .section-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 10px;
+        }
+
+        .section-header h2 {
+            margin: 0;
+            color: #1e293b;
+            font-size: 20px;
+        }
+
+        /* КНОПКИ */
+        .btn {
+            padding: 9px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #1a73e8;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1557b5;
+        }
+
+        .btn-primary:disabled {
+            background: #cbd5e1;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        /* ФОРМЫ */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 5px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #4a5568;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #cbd5e1;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #1a73e8;
+            outline: none;
+        }
+
+        .error-msg {
+            color: #dc2626;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #cbd5e1;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+            min-height: 70px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            border-color: #1a73e8;
+            outline: none;
+        }
+
+        /* ТАБЛИЦЫ */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .data-table th {
+            background: #f8fafc;
+            text-align: left;
+            padding: 10px;
+            color: #64748b;
+            border-bottom: 2px solid #edf2f7;
+        }
+
+        .data-table td {
+            padding: 10px;
+            border-bottom: 1px solid #edf2f7;
+            color: #334155;
+        }
+
+        .status-badge {
+            inline-size: max-content;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-badge.Pending {
+            background: #fef9c3;
+            color: #a16207;
+        }
+
+        .status-badge.Approved {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .status-badge.Completed {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .status-badge.Canceled {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .empty-msg {
+            text-align: center;
+            color: #64748b;
+            padding: 20px;
+        }
+
+        /* МОДАЛКИ */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-card {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            width: 420px;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            color: #94a3b8;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: #475569;
+        }
+
+        .result-view p {
+            margin: 8px 0;
+            font-size: 14px;
+            color: #334155;
+            line-height: 1.5;
+        }
+
+        .result-view strong {
+            color: #1e293b;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Портал Записи на Приём</h1>
+
+    <div class="container">
+
+        <!-- БЛОК 1: ЗАПИСЬ НА ПРИЁМ (US-6) -->
+        <div class="section-card">
+            <div class="section-header">
+                <h2>Запись на приём (US-6)</h2>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>ID пациента *</label>
+                    <input type="text" id="apptPatientId" placeholder="GUID из Profiles API">
+                    <div id="apptPatientIdError" class="error-msg">Please, sign in to make an appointment</div>
+                </div>
+                <div class="form-group">
+                    <label>Специализация *</label>
+                    <select id="apptSpecialization" onchange="onSpecializationChange()">
+                        <option value="">-- Загрузка... --</option>
+                    </select>
+                    <div id="apptSpecError" class="error-msg">Please, choose the specialization</div>
+                </div>
+                <div class="form-group">
+                    <label>Услуга *</label>
+                    <select id="apptService" onchange="checkCreateForm()">
+                        <option value="">-- Сначала выберите специализацию --</option>
+                    </select>
+                    <div id="apptServiceError" class="error-msg">Please, choose the service</div>
+                </div>
+                <div class="form-group">
+                    <label>ID врача *</label>
+                    <input type="text" id="apptDoctorId" placeholder="GUID врача из Profiles API" oninput="checkCreateForm()">
+                    <div id="apptDoctorError" class="error-msg">Please, choose the doctor</div>
+                </div>
+                <div class="form-group">
+                    <label>ID офиса *</label>
+                    <input type="text" id="apptOfficeId" placeholder="GUID офиса из Offices API" oninput="checkCreateForm()">
+                    <div id="apptOfficeError" class="error-msg">Please, choose the office</div>
+                </div>
+                <div class="form-group">
+                    <label>Дата приёма *</label>
+                    <input type="date" id="apptDate" onchange="checkCreateForm()">
+                    <div id="apptDateError" class="error-msg">Please, select the date</div>
+                </div>
+                <div class="form-group">
+                    <label>Временной слот *</label>
+                    <select id="apptTimeslot" onchange="checkCreateForm()">
+                        <option value="">-- Выберите слот --</option>
+                    </select>
+                    <div id="apptTimeError" class="error-msg">Please, choose the timeslot</div>
+                </div>
+            </div>
+            <div style="margin-top: 20px;">
+                <button class="btn btn-primary" id="createApptBtn" onclick="createAppointment()" disabled>Записаться на приём</button>
+            </div>
+        </div>
+
+        <!-- БЛОК 2: ИСТОРИЯ ЗАПИСЕЙ ПАЦИЕНТА -->
+        <div class="section-card">
+            <div class="section-header">
+                <h2>История записей пациента</h2>
+                <div style="display:flex; gap:10px; width: 50%;">
+                    <input type="text" id="historyPatientId" placeholder="GUID пациента" style="flex:1;">
+                    <button class="btn btn-primary" onclick="loadPatientHistory()">Показать</button>
+                </div>
+            </div>
+            <table class="data-table" id="historyTable" style="display:none;">
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Слот</th>
+                        <th>Специализация</th>
+                        <th>Врач</th>
+                        <th>Услуга</th>
+                        <th>Статус</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody"></tbody>
+            </table>
+            <div id="historyEmpty" class="empty-msg" style="display:none;">Введите GUID пациента и нажмите «Показать»</div>
+        </div>
+
+        <!-- БЛОК 3: РАСПИСАНИЕ ВРАЧА (US-10) -->
+        <div class="section-card">
+            <div class="section-header">
+                <h2>Расписание врача (US-10)</h2>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="scheduleDoctorId" placeholder="GUID врача" style="width: 260px;">
+                    <input type="date" id="scheduleDate">
+                    <button class="btn btn-primary" onclick="loadDoctorSchedule()">Показать</button>
+                </div>
+            </div>
+            <table class="data-table" id="scheduleTable" style="display:none;">
+                <thead>
+                    <tr>
+                        <th>Время</th>
+                        <th>Пациент</th>
+                        <th>Статус</th>
+                        <th>Заключение</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="scheduleTableBody"></tbody>
+            </table>
+            <div id="scheduleEmpty" class="empty-msg" style="display:none;">Введите GUID врача и дату, затем нажмите «Показать»</div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА: СОЗДАНИЕ ЗАКЛЮЧЕНИЯ (US-58) -->
+    <div id="resultModal" class="modal-overlay">
+        <div class="modal-card">
+            <span class="close-btn" onclick="closeResultModal()">&times;</span>
+            <h2 id="resultModalTitle">Создать заключение</h2>
+            <input type="hidden" id="resultAppointmentId">
+
+            <div class="form-group">
+                <label>Жалобы (Complaints) *</label>
+                <textarea id="resultComplaints" placeholder="Что беспокоит пациента"></textarea>
+                <div id="resultComplaintsError" class="error-msg">Please, enter the complaints</div>
+            </div>
+            <div class="form-group">
+                <label>Заключение (Conclusion) *</label>
+                <textarea id="resultConclusion" placeholder="Диагноз / заключение врача"></textarea>
+                <div id="resultConclusionError" class="error-msg">Please, enter the conclusion</div>
+            </div>
+            <div class="form-group">
+                <label>Рекомендации (Recommendations) *</label>
+                <textarea id="resultRecommendations" placeholder="Рекомендации по лечению"></textarea>
+                <div id="resultRecommendationsError" class="error-msg">Please, enter the recommendations</div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" style="flex:1;" onclick="saveResult()">Сохранить</button>
+                <button class="btn btn-secondary" onclick="closeResultModal()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА: ПРОСМОТР ЗАКЛЮЧЕНИЯ (US-60/61) -->
+    <div id="viewResultModal" class="modal-overlay">
+        <div class="modal-card">
+            <span class="close-btn" onclick="document.getElementById('viewResultModal').style.display='none'">&times;</span>
+            <h2>Медицинское заключение</h2>
+            <div class="result-view" id="viewResultBody"></div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" style="flex:1;" onclick="downloadPdf(currentViewAppointmentId)">Скачать PDF</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('viewResultModal').style.display='none'">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api/appointments';
+        // Services API — единственный внешний сервис с разрешённым CORS (AllowAll)
+        const SERVICES_API_URL = 'http://localhost:5285/api/specializations';
+
+        let specializationsCache = [];
+        let currentViewAppointmentId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initTimeslots();
+            loadSpecializations();
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('apptDate').value = today;
+            document.getElementById('scheduleDate').value = today;
+        });
+
+        // ============ СЛОТЫ ВРЕМЕНИ (09:00 - 18:00, шаг 30 минут) ============
+
+        function initTimeslots() {
+            const select = document.getElementById('apptTimeslot');
+            for (let hour = 9; hour < 18; hour++) {
+                for (const minutes of ['00', '30']) {
+                    const start = `${String(hour).padStart(2, '0')}:${minutes}`;
+                    const endHour = minutes === '30' ? hour + 1 : hour;
+                    const end = `${String(endHour).padStart(2, '0')}:${minutes === '30' ? '00' : '30'}`;
+                    const option = document.createElement('option');
+                    option.value = `${start} - ${end}`;
+                    option.textContent = `${start} - ${end}`;
+                    select.appendChild(option);
+                }
+            }
+        }
+
+        // ============ ЗАГРУЗКА СПЕЦИАЛИЗАЦИЙ И УСЛУГ ИЗ SERVICES API ============
+
+        async function loadSpecializations() {
+            const select = document.getElementById('apptSpecialization');
+            try {
+                const response = await fetch(SERVICES_API_URL);
+                if (!response.ok) throw new Error('Failed to load specializations');
+                specializationsCache = await response.json();
+
+                select.innerHTML = '<option value="">-- Выберите специализацию --</option>';
+                // Записаться можно только к активным специализациям
+                specializationsCache
+                    .filter(s => s.status === 'Active')
+                    .forEach(spec => {
+                        const option = document.createElement('option');
+                        option.value = spec.id;
+                        option.textContent = spec.name;
+                        select.appendChild(option);
+                    });
+            } catch (err) {
+                console.error(err);
+                select.innerHTML = '<option value="">-- Services API недоступен --</option>';
+            }
+        }
+
+        function onSpecializationChange() {
+            const specId = document.getElementById('apptSpecialization').value;
+            const serviceSelect = document.getElementById('apptService');
+            serviceSelect.innerHTML = '<option value="">-- Выберите услугу --</option>';
+
+            if (!specId) {
+                serviceSelect.innerHTML = '<option value="">-- Сначала выберите специализацию --</option>';
+                checkCreateForm();
+                return;
+            }
+
+            const spec = specializationsCache.find(s => s.id === specId);
+            const activeServices = (spec?.services || []).filter(s => s.status === 'Active');
+
+            if (activeServices.length === 0) {
+                serviceSelect.innerHTML = '<option value="">-- Нет активных услуг --</option>';
+            } else {
+                activeServices.forEach(service => {
+                    const option = document.createElement('option');
+                    option.value = service.id;
+                    option.textContent = `${service.name} (${service.price} BYN)`;
+                    serviceSelect.appendChild(option);
+                });
+            }
+            checkCreateForm();
+        }
+
+        // ============ СОЗДАНИЕ ЗАПИСИ (US-6) ============
+
+        function checkCreateForm() {
+            const patientId = document.getElementById('apptPatientId').value.trim();
+            const specId = document.getElementById('apptSpecialization').value;
+            const serviceId = document.getElementById('apptService').value;
+            const doctorId = document.getElementById('apptDoctorId').value.trim();
+            const officeId = document.getElementById('apptOfficeId').value.trim();
+            const date = document.getElementById('apptDate').value;
+            const timeslot = document.getElementById('apptTimeslot').value;
+
+            const isValid = patientId && specId && serviceId && doctorId && officeId && date && timeslot;
+            document.getElementById('createApptBtn').disabled = !isValid;
+        }
+
+        async function createAppointment() {
+            if (!validateCreateForm()) return;
+
+            const payload = {
+                patientId: document.getElementById('apptPatientId').value.trim(),
+                specializationId: document.getElementById('apptSpecialization').value,
+                doctorId: document.getElementById('apptDoctorId').value.trim(),
+                serviceId: document.getElementById('apptService').value,
+                officeId: document.getElementById('apptOfficeId').value.trim(),
+                date: document.getElementById('apptDate').value,
+                timeslot: document.getElementById('apptTimeslot').value
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.status === 401) {
+                    alert('Sign in to make an appointment');
+                    return;
+                }
+                if (response.ok) {
+                    const data = await response.json();
+                    alert(`Appointment has been created (ID: ${data.appointmentId})`);
+                    // Если открытая история принадлежит этому пациенту — обновим её
+                    if (document.getElementById('historyPatientId').value.trim() === payload.patientId) {
+                        loadPatientHistory();
+                    }
+                } else {
+                    const data = await response.json().catch(() => ({}));
+                    alert(data.message || 'Ошибка при создании записи.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка сети при создании записи.');
+            }
+        }
+
+        function validateCreateForm() {
+            const fields = [
+                ['apptPatientId', 'apptPatientIdError', v => !!v.trim()],
+                ['apptSpecialization', 'apptSpecError', v => !!v],
+                ['apptService', 'apptServiceError', v => !!v],
+                ['apptDoctorId', 'apptDoctorError', v => !!v.trim()],
+                ['apptOfficeId', 'apptOfficeError', v => !!v.trim()],
+                ['apptDate', 'apptDateError', v => !!v],
+                ['apptTimeslot', 'apptTimeError', v => !!v]
+            ];
+
+            let ok = true;
+            fields.forEach(([inputId, errorId, predicate]) => {
+                const input = document.getElementById(inputId);
+                const error = document.getElementById(errorId);
+                if (!predicate(input.value)) {
+                    input.style.borderColor = '#dc2626';
+                    error.style.display = 'block';
+                    ok = false;
+                } else {
+                    input.style.borderColor = '#cbd5e1';
+                    error.style.display = 'none';
+                }
+            });
+            return ok;
+        }
+
+        // ============ ИСТОРИЯ ПАЦИЕНТА ============
+
+        async function loadPatientHistory() {
+            const patientId = document.getElementById('historyPatientId').value.trim();
+            if (!patientId) { alert('Введите GUID пациента'); return; }
+
+            try {
+                const response = await fetch(`${API_URL}/patient/${patientId}`);
+                if (!response.ok) throw new Error('Failed to load history');
+                const history = await response.json();
+
+                const table = document.getElementById('historyTable');
+                const empty = document.getElementById('historyEmpty');
+                const tbody = document.getElementById('historyTableBody');
+                tbody.innerHTML = '';
+                table.style.display = 'table';
+                empty.style.display = 'none';
+
+                if (history.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="empty-msg">У пациента пока нет записей</td></tr>';
+                    return;
+                }
+
+                history.forEach(a => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${new Date(a.date).toLocaleDateString('ru-RU')}</td>
+                        <td>${a.timeslot}</td>
+                        <td>${a.specializationId || '-'}</td>
+                        <td>${a.doctorId || '-'}</td>
+                        <td>${a.serviceId || '-'}</td>
+                        <td><span class="status-badge ${a.status}">${a.status}</span></td>
+                        <td style="display:flex; gap:5px;">
+                            <button class="btn btn-secondary" style="padding:4px 10px; font-size:12px;" onclick="viewResult('${a.id}')">Заключение</button>
+                            ${a.status !== 'Canceled' ? `<button class="btn btn-danger" style="padding:4px 10px; font-size:12px;" onclick="cancelAppointment('${a.id}')">Отменить</button>` : ''}
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка загрузки истории записей.');
+            }
+        }
+
+        // ============ ОТМЕНА ЗАПИСИ (US-15) ============
+
+        async function cancelAppointment(id) {
+            if (!confirm('Отменить эту запись?')) return;
+            try {
+                const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    loadPatientHistory();
+                } else {
+                    const data = await response.json().catch(() => ({}));
+                    alert(data.message || 'Не удалось отменить запись.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка сети при отмене записи.');
+            }
+        }
+
+        // ============ РАСПИСАНИЕ ВРАЧА (US-10) ============
+
+        async function loadDoctorSchedule() {
+            const doctorId = document.getElementById('scheduleDoctorId').value.trim();
+            const date = document.getElementById('scheduleDate').value;
+            if (!doctorId || !date) { alert('Введите GUID врача и дату'); return; }
+
+            try {
+                const response = await fetch(`${API_URL}/doctor/${doctorId}?date=${date}`);
+                if (!response.ok) throw new Error('Failed to load schedule');
+                const schedule = await response.json();
+
+                const table = document.getElementById('scheduleTable');
+                const empty = document.getElementById('scheduleEmpty');
+                const tbody = document.getElementById('scheduleTableBody');
+                tbody.innerHTML = '';
+                table.style.display = 'table';
+                empty.style.display = 'none';
+
+                if (schedule.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">На эту дату приёмов нет</td></tr>';
+                    return;
+                }
+
+                schedule.forEach(a => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${a.timeslot}</strong></td>
+                        <td>${a.patientFullName || a.patientId}</td>
+                        <td><span class="status-badge ${a.status}">${a.status}</span></td>
+                        <td>${a.hasResult ? '✅ Есть' : '— Нет'}</td>
+                        <td style="display:flex; gap:5px;">
+                            <button class="btn btn-secondary" style="padding:4px 10px; font-size:12px;" onclick="viewResult('${a.id}')">Просмотр</button>
+                            ${a.hasResult
+                                ? `<button class="btn btn-primary" style="padding:4px 10px; font-size:12px;" onclick="openEditResultModal('${a.id}')">Редактировать</button>`
+                                : `<button class="btn btn-primary" style="padding:4px 10px; font-size:12px;" onclick="openCreateResultModal('${a.id}')">+ Заключение</button>`}
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка загрузки расписания.');
+            }
+        }
+
+        // ============ ЗАКЛЮЧЕНИЯ (US-58 / US-59 / US-60 / US-61) ============
+
+        function openCreateResultModal(appointmentId) {
+            document.getElementById('resultModalTitle').innerText = 'Создать заключение';
+            document.getElementById('resultAppointmentId').value = appointmentId;
+            ['resultComplaints', 'resultConclusion', 'resultRecommendations'].forEach(id => {
+                document.getElementById(id).value = '';
+                document.getElementById(id).style.borderColor = '#cbd5e1';
+            });
+            document.getElementById('resultModal').style.display = 'flex';
+        }
+
+        async function openEditResultModal(appointmentId) {
+            try {
+                const response = await fetch(`${API_URL}/${appointmentId}/result`);
+                if (!response.ok) throw new Error('Failed to load result');
+                const result = await response.json();
+
+                document.getElementById('resultModalTitle').innerText = 'Редактировать заключение';
+                document.getElementById('resultAppointmentId').value = appointmentId;
+                document.getElementById('resultComplaints').value = result.complaints;
+                document.getElementById('resultConclusion').value = result.conclusion;
+                document.getElementById('resultRecommendations').value = result.recommendations;
+                document.getElementById('resultModal').style.display = 'flex';
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка загрузки заключения.');
+            }
+        }
+
+        function closeResultModal() {
+            document.getElementById('resultModal').style.display = 'none';
+        }
+
+        async function saveResult() {
+            const appointmentId = document.getElementById('resultAppointmentId').value;
+            const complaints = document.getElementById('resultComplaints').value.trim();
+            const conclusion = document.getElementById('resultConclusion').value.trim();
+            const recommendations = document.getElementById('resultRecommendations').value.trim();
+
+            // Валидация F-1..F-3
+            let ok = true;
+            const fields = [
+                ['resultComplaints', 'resultComplaintsError', complaints],
+                ['resultConclusion', 'resultConclusionError', conclusion],
+                ['resultRecommendations', 'resultRecommendationsError', recommendations]
+            ];
+            fields.forEach(([inputId, errorId, value]) => {
+                const input = document.getElementById(inputId);
+                const error = document.getElementById(errorId);
+                if (!value) { input.style.borderColor = '#dc2626'; error.style.display = 'block'; ok = false; }
+                else { input.style.borderColor = '#cbd5e1'; error.style.display = 'none'; }
+            });
+            if (!ok) return;
+
+            // Определяем: создание (POST) или редактирование (PUT)
+            const hasResult = await checkResultExists(appointmentId);
+            const url = hasResult ? `${API_URL}/${appointmentId}/result` : `${API_URL}/results`;
+            const method = hasResult ? 'PUT' : 'POST';
+            const payload = hasResult ? { complaints, conclusion, recommendations } : { appointmentId, complaints, conclusion, recommendations };
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) {
+                    closeResultModal();
+                    loadDoctorSchedule();
+                } else {
+                    const data = await response.json().catch(() => ({}));
+                    alert(data.message || 'Ошибка при сохранении заключения.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка сети при сохранении заключения.');
+            }
+        }
+
+        async function checkResultExists(appointmentId) {
+            const response = await fetch(`${API_URL}/${appointmentId}/result`);
+            return response.ok;
+        }
+
+        async function viewResult(appointmentId) {
+            try {
+                const response = await fetch(`${API_URL}/${appointmentId}/result`);
+                if (response.status === 404) {
+                    alert('По этому приёму ещё нет медицинского заключения.');
+                    return;
+                }
+                if (!response.ok) throw new Error('Failed to load result');
+                const result = await response.json();
+
+                currentViewAppointmentId = appointmentId;
+                document.getElementById('viewResultBody').innerHTML = `
+                    <p><strong>Жалобы:</strong> ${result.complaints}</p>
+                    <p><strong>Заключение:</strong> ${result.conclusion}</p>
+                    <p><strong>Рекомендации:</strong> ${result.recommendations}</p>
+                    <p style="color:#64748b; font-size:12px;">Создано: ${new Date(result.createdAt).toLocaleString('ru-RU')}</p>
+                `;
+                document.getElementById('viewResultModal').style.display = 'flex';
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка загрузки заключения.');
+            }
+        }
+
+        // ============ СКАЧИВАНИЕ PDF (US-62) ============
+
+        async function downloadPdf(appointmentId) {
+            if (!appointmentId) return;
+            try {
+                const response = await fetch(`${API_URL}/${appointmentId}/result/download`);
+                if (response.status === 404) {
+                    alert('Документ не найден: по приёму нет заключения.');
+                    return;
+                }
+                if (!response.ok) throw new Error('Failed to download PDF');
+
+                // Превращаем ответ в файл и «кликаем» по временной ссылке — браузер скачает PDF
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `MedicalReport_${appointmentId}.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка скачивания PDF.');
+            }
+        }
+
+        // Живое обновление состояния кнопки записи
+        ['apptPatientId', 'apptDoctorId', 'apptOfficeId', 'apptDate'].forEach(id => {
+            document.getElementById(id).addEventListener('input', checkCreateForm);
+        });
+    </script>
+</body>
+
+</html>
