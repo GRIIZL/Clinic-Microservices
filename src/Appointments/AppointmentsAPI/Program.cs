@@ -5,22 +5,34 @@ using Appointments.Infrastructure.PostgreSql.Data;
 using Appointments.Infrastructure.PostgreSql.Repositories;
 using Appointments.Infrastructure.RabbitMQ;
 
+// «Прививка» от конфликтов UTC часовых поясов Postgres — один раз при старте приложения (SRP),
+// а не при каждом создании модели DbContext
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ИСПРАВЛЕННЫЙ ВАРИАНТ: Явно перенаправляем сборку миграций в слой Infrastructure!
+// Настройка CORS, чтобы фронтенд мог обращаться к порту 5250 без блокировок браузера
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+    });
+});
+
+// Явно перенаправляем сборку миграций в слой Infrastructure
 builder.Services.AddDbContext<AppointmentsDataContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         b => b.MigrationsAssembly("Appointments.Infrastructure.PostgreSql")
     ));
 
-builder.Services.AddScoped<AppointmentService>();
-
 // Регистрация слоев Clean Architecture
+builder.Services.AddScoped<AppointmentService>();
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 
 // Регистрация обработчика событий специализаций (DIP: интерфейс → реализация)
@@ -37,7 +49,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors("AllowAll");
 app.UseAuthorization();
+
+app.UseDefaultFiles(); // Ищет index.html в wwwroot по умолчанию
+app.UseStaticFiles();  // Разрешает серверу отдавать HTML/JS файлы
+
 app.MapControllers();
 
 app.Run();
