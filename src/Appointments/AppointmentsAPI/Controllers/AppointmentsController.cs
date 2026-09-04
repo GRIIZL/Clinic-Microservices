@@ -103,5 +103,23 @@ namespace AppointmentsAPI.Controllers
             // Возвращаем файл в браузер с правильным mime-типом (application/pdf) по AC-2
             return File(fileBytes, "application/pdf", $"MedicalReport_{appointmentId}.pdf");
         }
+
+        // US-7: Получение динамической сетки доступных временных слотов для записи
+        [HttpGet("available-slots")]
+        public async Task<IActionResult> GetSlots(
+            [FromQuery] Guid doctorId, 
+            [FromQuery] DateTime date, 
+            [FromQuery] string categoryName, 
+            CancellationToken cancellationToken)
+        {
+            if (doctorId == Guid.Empty || string.IsNullOrEmpty(categoryName) || date == default)
+            {
+                return BadRequest(new { message = "DoctorId, categoryName and date parameters are required." });
+            }
+
+            var result = await _appointmentService.GetAvailableSlotsAsync(doctorId, date, categoryName, cancellationToken);
+            return Ok(result);
+        }
+
     }
 }

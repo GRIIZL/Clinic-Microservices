@@ -144,5 +144,86 @@ namespace Appointments.Application.Services
                 });
         }
 
+        // US-7: Алгоритмический расчет свободных временных слотов с учетом категорий услуг
+        public async Task<AvailableSlotsResponseDto> GetAvailableSlotsAsync(
+            Guid doctorId, 
+            DateTime date, 
+            string categoryName, 
+            CancellationToken cancellationToken = default)
+        {
+            // Бизнес-правила сетки приёма (AC-1, AC-5, AC-6, AC-7)
+            const int SlotMinutes = 10;                       // Шаг сетки 10 минут
+            const int WorkStartHour = 9;                      // Рабочий день: с 09:00
+            const int WorkEndHour = 17;                       // ...до 17:00
+
+            var response = new AvailableSlotsResponseDto 
+            { 
+                Date = date.ToShortDateString() 
+            };
+
+            // Сколько слотов подряд нужно для нашей услуги
+            response.RequiredSlotsCount = categoryName switch
+            {
+                "Analyses" => 1,      // 10 минут (AC-5)
+                "Consultations" => 2, // 20 минут (AC-6)
+                "Diagnostics" => 3,   // 30 минут (AC-7)
+                _ => 2                // Дефолт 2 слота
+            };
+
+            // 1. Извлекаем из базы данных все существующие записи к этому врачу на выбранную дату
+            var existingAppointments = await _repository.GetByDoctorIdAsync(doctorId, date, cancellationToken);
+            
+            // Составляем хэш-сет всех занятых 10-минутных точек времени в этот день.
+            // ВАЖНО: отменённые записи слот НЕ занимают — время снова доступно для записи
+            var busySlots = new HashSet<TimeSpan>();
+            foreach (var app in existingAppointments.Where(a => a.Status != "Canceled"))
+            {
+                // Парсим строку слота вида "10:30 - 11:00" или "09:00 - 09:20"
+                var parts = app.Timeslot.Split('-');
+                if (parts.Length == 2 && TimeSpan.TryParse(parts[0].Trim(), out var startTime) 
+                                      && TimeSpan.TryParse(parts[1].Trim(), out var endTime))
+                {
+                    // Маркируем все 10-минутные интервалы внутри этой записи как занятые
+                    var current = startTime;
+                    while (current < endTime)
+                    {
+                        busySlots.Add(current);
+                        current = current.Add(TimeSpan.FromMinutes(SlotMinutes));
+                    }
+                }
+            }
+
+            // 2. Пробегаем по рабочему дню и ищем окна нужной длины
+            var workStart = new TimeSpan(WorkStartHour, 0, 0);
+            var workEnd = new TimeSpan(WorkEndHour, 0, 0);
+            var step = TimeSpan.FromMinutes(SlotMinutes);
+
+            var checkTime = workStart;
+            while (checkTime.Add(TimeSpan.FromMinutes(response.RequiredSlotsCount * SlotMinutes)) <= workEnd)
+            {
+                bool isWindowFree = true;
+                
+                // Проверяем, свободны ли все N слотов подряд, начиная с этой минуты
+                for (int i = 0; i < response.RequiredSlotsCount; i++)
+                {
+                    var slotToCheck = checkTime.Add(TimeSpan.FromMinutes(i * SlotMinutes));
+                    if (busySlots.Contains(slotToCheck))
+                    {
+                        isWindowFree = false;
+                        break;
+                    }
+                }
+
+                // Если все слоты подряд свободны — эта точка времени доступна для записи! (AC-3, AC-4)
+                if (isWindowFree)
+                {
+                    response.AvailableStartTimes.Add(checkTime.ToString(@"hh\:mm"));
+                }
+
+                checkTime = checkTime.Add(step); // Сдвигаемся на 10 минут вперед
+            }
+
+            return response;
+        }
     }
 }
