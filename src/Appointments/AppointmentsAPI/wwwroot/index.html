@@ -263,6 +263,42 @@
         .result-view strong {
             color: #1e293b;
         }
+
+        /* СЕТКА СЛОТОВ (US-7) */
+        .slots-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            min-height: 34px;
+        }
+
+        .slot-btn {
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 2px solid #cbd5e1;
+            background: white;
+            color: #334155;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .slot-btn:hover:not(:disabled) {
+            border-color: #1a73e8;
+            color: #1a73e8;
+        }
+
+        .slot-btn.selected {
+            background: #1a73e8;
+            border-color: #1a73e8;
+            color: white;
+        }
+
+        .slot-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 
@@ -292,14 +328,14 @@
                 </div>
                 <div class="form-group">
                     <label>Услуга *</label>
-                    <select id="apptService" onchange="checkCreateForm()">
+                    <select id="apptService" onchange="checkCreateForm(); loadAvailableSlots();">
                         <option value="">-- Сначала выберите специализацию --</option>
                     </select>
                     <div id="apptServiceError" class="error-msg">Please, choose the service</div>
                 </div>
                 <div class="form-group">
                     <label>ID врача *</label>
-                    <input type="text" id="apptDoctorId" placeholder="GUID врача из Profiles API" oninput="checkCreateForm()">
+                    <input type="text" id="apptDoctorId" placeholder="GUID врача из Profiles API" oninput="checkCreateForm(); loadAvailableSlots();">
                     <div id="apptDoctorError" class="error-msg">Please, choose the doctor</div>
                 </div>
                 <div class="form-group">
@@ -309,14 +345,15 @@
                 </div>
                 <div class="form-group">
                     <label>Дата приёма *</label>
-                    <input type="date" id="apptDate" onchange="checkCreateForm()">
+                    <input type="date" id="apptDate" onchange="checkCreateForm(); loadAvailableSlots();">
                     <div id="apptDateError" class="error-msg">Please, select the date</div>
                 </div>
                 <div class="form-group">
-                    <label>Временной слот *</label>
-                    <select id="apptTimeslot" onchange="checkCreateForm()">
-                        <option value="">-- Выберите слот --</option>
-                    </select>
+                    <label>Временной слот * <span id="slotHint" style="font-weight:normal; color:#64748b;"></span></label>
+                    <div id="apptSlots" class="slots-grid">
+                        <span class="empty-msg" style="padding:5px;">Укажите врача, услугу и дату</span>
+                    </div>
+                    <input type="hidden" id="apptTimeslot">
                     <div id="apptTimeError" class="error-msg">Please, choose the timeslot</div>
                 </div>
             </div>
@@ -429,28 +466,86 @@
         let currentViewAppointmentId = null;
 
         document.addEventListener('DOMContentLoaded', () => {
-            initTimeslots();
             loadSpecializations();
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('apptDate').value = today;
             document.getElementById('scheduleDate').value = today;
         });
 
-        // ============ СЛОТЫ ВРЕМЕНИ (09:00 - 18:00, шаг 30 минут) ============
+        // ============ ДИНАМИЧЕСКИЕ СЛОТЫ (US-7) ============
 
-        function initTimeslots() {
-            const select = document.getElementById('apptTimeslot');
-            for (let hour = 9; hour < 18; hour++) {
-                for (const minutes of ['00', '30']) {
-                    const start = `${String(hour).padStart(2, '0')}:${minutes}`;
-                    const endHour = minutes === '30' ? hour + 1 : hour;
-                    const end = `${String(endHour).padStart(2, '0')}:${minutes === '30' ? '00' : '30'}`;
-                    const option = document.createElement('option');
-                    option.value = `${start} - ${end}`;
-                    option.textContent = `${start} - ${end}`;
-                    select.appendChild(option);
-                }
+        // Загружаем доступные слоты с бэкенда, когда известны врач + услуга + дата
+        async function loadAvailableSlots() {
+            const doctorId = document.getElementById('apptDoctorId').value.trim();
+            const date = document.getElementById('apptDate').value;
+            const serviceId = document.getElementById('apptService').value;
+            const container = document.getElementById('apptSlots');
+
+            // Сбрасываем выбор при любом изменении входных данных
+            document.getElementById('apptTimeslot').value = '';
+
+            const specId = document.getElementById('apptSpecialization').value;
+            const spec = specializationsCache.find(s => s.id === specId);
+            const service = spec?.services?.find(s => s.id === serviceId);
+
+            // Для запроса нужна категория услуги — берём её из кэша Services API
+            if (!doctorId || !date || !service) {
+                container.innerHTML = '<span class="empty-msg" style="padding:5px;">Укажите врача, услугу и дату</span>';
+                document.getElementById('slotHint').innerText = '';
+                checkCreateForm();
+                return;
             }
+
+            container.innerHTML = '<span class="empty-msg" style="padding:5px;">Загрузка слотов...</span>';
+
+            try {
+                const url = `${API_URL}/available-slots?doctorId=${doctorId}&date=${date}&categoryName=${encodeURIComponent(service.categoryName)}`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Failed to load slots');
+                const data = await response.json();
+
+                document.getElementById('slotHint').innerText =
+                    `(приём занимает ${data.requiredSlotsCount * 10} мин)`;
+                renderSlots(data.availableStartTimes, data.requiredSlotsCount);
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<span class="empty-msg" style="padding:5px;">Не удалось загрузить слоты</span>';
+            }
+            checkCreateForm();
+        }
+
+        function renderSlots(startTimes, requiredSlotsCount) {
+            const container = document.getElementById('apptSlots');
+            container.innerHTML = '';
+
+            if (startTimes.length === 0) {
+                container.innerHTML = '<span class="empty-msg" style="padding:5px;">На эту дату свободных слотов нет</span>';
+                return;
+            }
+
+            startTimes.forEach(start => {
+                // Время окончания вычисляем из requiredSlotsCount (приходит с бэкенда — единый источник правды)
+                const [h, m] = start.split(':').map(Number);
+                const end = new Date(2000, 0, 1, h, m + requiredSlotsCount * 10);
+                const endStr = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`;
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'slot-btn';
+                btn.textContent = `${start} - ${endStr}`;
+                btn.onclick = () => selectSlot(btn, `${start} - ${endStr}`);
+                container.appendChild(btn);
+            });
+        }
+
+        function selectSlot(btn, timeslotValue) {
+            // Снимаем выделение с предыдущей кнопки
+            document.querySelectorAll('.slot-btn.selected').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            document.getElementById('apptTimeslot').value = timeslotValue;
+            // Скрываем ошибку, если слот выбран
+            document.getElementById('apptTimeError').style.display = 'none';
+            checkCreateForm();
         }
 
         // ============ ЗАГРУЗКА СПЕЦИАЛИЗАЦИЙ И УСЛУГ ИЗ SERVICES API ============
@@ -482,6 +577,11 @@
             const specId = document.getElementById('apptSpecialization').value;
             const serviceSelect = document.getElementById('apptService');
             serviceSelect.innerHTML = '<option value="">-- Выберите услугу --</option>';
+
+            // Сбрасываем выбранный слот — услуга изменилась, длительность могла измениться
+            document.getElementById('apptTimeslot').value = '';
+            document.getElementById('apptSlots').innerHTML = '<span class="empty-msg" style="padding:5px;">Укажите врача, услугу и дату</span>';
+            document.getElementById('slotHint').innerText = '';
 
             if (!specId) {
                 serviceSelect.innerHTML = '<option value="">-- Сначала выберите специализацию --</option>';
@@ -834,9 +934,14 @@
             }
         }
 
-        // Живое обновление состояния кнопки записи
-        ['apptPatientId', 'apptDoctorId', 'apptOfficeId', 'apptDate'].forEach(id => {
+        // Живое обновление состояния кнопки записи и сетки слотов
+        ['apptPatientId', 'apptOfficeId'].forEach(id => {
             document.getElementById(id).addEventListener('input', checkCreateForm);
+        });
+        // Эти поля влияют на расчёт слотов — перезагружаем сетку
+        ['apptDoctorId', 'apptDate'].forEach(id => {
+            document.getElementById(id).addEventListener('change', loadAvailableSlots);
+            document.getElementById(id).addEventListener('input', loadAvailableSlots);
         });
     </script>
 </body>
