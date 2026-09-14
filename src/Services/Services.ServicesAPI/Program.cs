@@ -25,8 +25,11 @@ builder.Services.AddScoped<ISpecializationRepository, SpecializationRepository>(
 // Регистрация сервиса бизнес-логики
 builder.Services.AddScoped<SpezializationService>();
 
+// Регистрация шины MassTransit (RabbitMQ)
+builder.Services.AddServicesMessaging(builder.Configuration);
+
 // Регистрация RabbitMQ Publisher (публикует события об изменении специализаций)
-builder.Services.AddScoped<IEventPublisher, RabbitMqPublisher>();
+builder.Services.AddScoped<IEventPublisher, MassTransitEventPublisher>();
 
 var app = builder.Build();
 

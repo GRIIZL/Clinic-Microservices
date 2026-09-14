@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Appointments.Application.Interfaces;
@@ -11,8 +12,8 @@ namespace Appointments.Application.Services
 {
     /// <summary>
     /// Обрабатывает события от Services API:
-    /// - Если специализация стала Inactive → отменяет все активные записи к врачам этой специализации
-    /// - Если услуга стала Inactive → блокирует её в расписании
+    /// - Специализация стала Inactive → отменяет все активные записи этой специализации
+    /// - Услуга стала Inactive → отменяет активные записи, ссылающиеся на эту услугу
     /// </summary>
     public class SpecializationEventHandlingService : ISpecializationEventHandlingService
     {
@@ -36,125 +37,83 @@ namespace Appointments.Application.Services
                 evt.Status,
                 evt.ChangeType);
 
-            // Сценарий 1: Специализация стала неактивной
-            if (evt.Status == "Inactive" && evt.ChangeType == "SpecializationStatus")
-            {
-                await HandleSpecializationInactiveAsync(evt, cancellationToken);
-                return;
-            }
-
-            // Сценарий 2: Конкретная услуга стала неактивной
-            if (evt.Status == "Inactive" && evt.ChangeType == "ServiceStatus" && !string.IsNullOrEmpty(evt.ServiceId))
-            {
-                await HandleServiceInactiveAsync(evt, cancellationToken);
-                return;
-            }
-
-            // Сценарий 3: Статус изменился на Active — можно разблокировать
-            if (evt.Status == "Active")
+            // Реагируем только на деактивацию — остальные изменения не требуют действий
+            if (evt.Status != ServiceStatuses.Inactive)
             {
                 _logger.LogInformation(
-                    "[Appointments] Specialization '{SpecializationId}' is now Active. No action needed.",
-                    evt.SpecializationId);
+                    "[Appointments] Specialization '{SpecializationId}' is now {Status}. No action needed.",
+                    evt.SpecializationId,
+                    evt.Status);
                 return;
             }
 
-            _logger.LogWarning(
-                "[Appointments] Unknown event combination: Status={Status}, ChangeType={ChangeType}",
-                evt.Status,
-                evt.ChangeType);
+            switch (evt.ChangeType)
+            {
+                case SpecializationChangeTypes.SpecializationStatus:
+                    await CancelAndLogAsync(
+                        loadAppointments: ct => _appointmentRepository.GetActiveBySpecializationIdAsync(evt.SpecializationId, ct),
+                        scopeDescription: $"specialization '{evt.SpecializationId}'",
+                        cancellationToken);
+                    break;
+
+                case SpecializationChangeTypes.ServiceStatus when !string.IsNullOrEmpty(evt.ServiceId):
+                    await CancelAndLogAsync(
+                        loadAppointments: ct => _appointmentRepository.GetActiveByServiceIdAsync(evt.ServiceId!, ct),
+                        scopeDescription: $"service '{evt.ServiceId}'",
+                        cancellationToken);
+                    break;
+
+                default:
+                    _logger.LogWarning(
+                        "[Appointments] Unknown event combination: Status={Status}, ChangeType={ChangeType}",
+                        evt.Status,
+                        evt.ChangeType);
+                    break;
+            }
         }
 
         /// <summary>
-        /// Сценарий: специализация стала Inactive.
-        /// Отменяем ВСЕ активные записи к врачам этой специализации.
-        /// Это закрывает требование ТЗ: "при неактивной специализации — каскадная отмена записей".
+        /// Единая логика каскадной отмены: загружает активные записи по переданному фильтру,
+        /// переводит их в статус Canceled и логирует результат.
+        /// Устраняет дублирование между сценариями специализации и услуги.
         /// </summary>
-        private async Task HandleSpecializationInactiveAsync(SpecializationChangedEvent evt, CancellationToken cancellationToken)
+        private async Task CancelAndLogAsync(
+            Func<CancellationToken, Task<IEnumerable<Appointment>>> loadAppointments,
+            string scopeDescription,
+            CancellationToken cancellationToken)
         {
-            _logger.LogInformation(
-                "[Appointments] Specialization '{SpecializationId}' ({SpecializationName}) is now INACTIVE. Canceling all active appointments...",
-                evt.SpecializationId,
-                evt.SpecializationName);
-
             try
             {
-                // Фильтрация происходит на стороне БД (см. репозиторий), а не в памяти
-                var activeAppointments = await _appointmentRepository.GetActiveBySpecializationIdAsync(evt.SpecializationId, cancellationToken);
-                var appointmentsToCancel = activeAppointments.ToList();
+                var appointmentsToCancel = (await loadAppointments(cancellationToken)).ToList();
 
                 if (appointmentsToCancel.Count == 0)
                 {
                     _logger.LogInformation(
-                        "[Appointments] No active appointments found for specialization '{SpecializationId}'.",
-                        evt.SpecializationId);
+                        "[Appointments] No active appointments found for {Scope}.",
+                        scopeDescription);
                     return;
                 }
 
                 foreach (var appointment in appointmentsToCancel)
                 {
-                    appointment.Status = "Canceled";
+                    appointment.Status = AppointmentStatuses.Canceled;
                     appointment.UpdatedAt = DateTime.UtcNow;
                     await _appointmentRepository.UpdateAsync(appointment, cancellationToken);
                 }
 
                 _logger.LogInformation(
-                    "[Appointments] Cancelled {Count} appointments for specialization '{SpecializationId}'.",
+                    "[Appointments] Cancelled {Count} appointments for {Scope}.",
                     appointmentsToCancel.Count,
-                    evt.SpecializationId);
+                    scopeDescription);
             }
             catch (Exception ex)
             {
                 _logger.LogError(
                     ex,
-                    "[Appointments] Error canceling appointments for specialization '{SpecializationId}'.",
-                    evt.SpecializationId);
-                throw; // пробрасываем наверх: consumer сделает nack, и сообщение вернётся в очередь (retry)
-            }
-        }
+                    "[Appointments] Error canceling appointments for {Scope}.",
+                    scopeDescription);
 
-        /// <summary>
-        /// Сценарий: конкретная услуга стала Inactive.
-        /// Отменяем активные записи, ссылающиеся на эту услугу.
-        /// </summary>
-        private async Task HandleServiceInactiveAsync(SpecializationChangedEvent evt, CancellationToken cancellationToken)
-        {
-            _logger.LogInformation(
-                "[Appointments] Service '{ServiceName}' (Id: {ServiceId}) is now INACTIVE. Canceling related appointments...",
-                evt.ServiceName,
-                evt.ServiceId);
-
-            try
-            {
-                var activeAppointments = await _appointmentRepository.GetActiveByServiceIdAsync(evt.ServiceId!, cancellationToken);
-                var appointmentsToCancel = activeAppointments.ToList();
-
-                if (appointmentsToCancel.Count == 0)
-                {
-                    _logger.LogInformation(
-                        "[Appointments] No active appointments found for service '{ServiceId}'.",
-                        evt.ServiceId);
-                    return;
-                }
-
-                foreach (var appointment in appointmentsToCancel)
-                {
-                    appointment.Status = "Canceled";
-                    appointment.UpdatedAt = DateTime.UtcNow;
-                    await _appointmentRepository.UpdateAsync(appointment, cancellationToken);
-                }
-
-                _logger.LogInformation(
-                    "[Appointments] Cancelled {Count} appointments for service '{ServiceId}'.",
-                    appointmentsToCancel.Count,
-                    evt.ServiceId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(
-                    ex,
-                    "[Appointments] Error canceling appointments for service '{ServiceId}'.",
-                    evt.ServiceId);
+                // Пробрасываем наверх: MassTransit вернёт сообщение в очередь (retry)
                 throw;
             }
         }

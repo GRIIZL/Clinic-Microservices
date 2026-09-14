@@ -42,6 +42,9 @@ public class SpezializationService
             var service = specialization.Services.FirstOrDefault(s => s.Id == serviceId);
             if (service == null) return false;
 
+            // Запоминаем старый статус ДО изменения — иначе сравнение всегда ложно
+            var oldStatus = service.Status;
+
             // Обновляем поля по ТЗ
             service.Name = dto.Name.Trim();
             service.Price = dto.Price;
@@ -54,15 +57,16 @@ public class SpezializationService
             // Перезаписываем обновленный агрегат в MongoDB
             await _repository.UpdateAsync(specialization, cancellationToken);
 
-            // Публикуем событие об изменении услуги (только если статус изменился)
-            if (service.Status != dto.Status)
+            // Публикуем событие об изменении услуги (только если статус реально изменился)
+            if (oldStatus != dto.Status)
             {
                 await _eventPublisher.PublishAsync(new SpecializationChangedEvent
                 {
                     SpecializationId = specializationId,
                     SpecializationName = specialization.Name,
                     Status = dto.Status,
-                    ChangeType = "ServiceStatus",
+                    OldStatus = oldStatus,
+                    ChangeType = SpecializationChangeTypes.ServiceStatus,
                     ServiceId = serviceId,
                     ServiceName = dto.Name,
                     ChangedAt = DateTime.UtcNow
@@ -127,11 +131,11 @@ public class SpezializationService
             specialization.Status = dto.Status;
             specialization.UpdatedAt = DateTime.UtcNow;
 
-            if (dto.Status == "Inactive")
+            if (dto.Status == ServiceStatuses.Inactive)
             {
                 foreach (var service in specialization.Services)
                 {
-                    service.Status = "Inactive";
+                    service.Status = ServiceStatuses.Inactive;
                 }
             }
 
@@ -143,7 +147,7 @@ public class SpezializationService
                 SpecializationId = id,
                 SpecializationName = specialization.Name,
                 Status = dto.Status,
-                ChangeType = "SpecializationStatus",
+                ChangeType = SpecializationChangeTypes.SpecializationStatus,
                 ChangedAt = DateTime.UtcNow
             }, cancellationToken);
 

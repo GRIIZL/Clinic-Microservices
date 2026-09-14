@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Appointments.Application.Configuration;
 using Appointments.Application.Interfaces;
 using Appointments.Application.Services;
 using Appointments.Infrastructure.PostgreSql.Data;
@@ -31,15 +32,21 @@ builder.Services.AddDbContext<AppointmentsDataContext>(options =>
         b => b.MigrationsAssembly("Appointments.Infrastructure.PostgreSql")
     ));
 
+// Настройки расчёта слотов приёма (US-7) — читаются из секции "AppointmentSlots",
+// переопределяются переменными окружения (AppointmentSlots__SlotMinutes и т.д.)
+builder.Services.Configure<AppointmentSlotsOptions>(
+    builder.Configuration.GetSection(AppointmentSlotsOptions.SectionName));
+
 // Регистрация слоев Clean Architecture
 builder.Services.AddScoped<AppointmentService>();
+builder.Services.AddScoped<ISlotService, SlotService>();
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 
 // Регистрация обработчика событий специализаций (DIP: интерфейс → реализация)
 builder.Services.AddScoped<ISpecializationEventHandlingService, SpecializationEventHandlingService>();
 
-// Регистрация фонового сервиса RabbitMQ Consumer (BackgroundService)
-builder.Services.AddHostedService<RabbitMqConsumer>();
+// Регистрация шины MassTransit (RabbitMQ): consumer + endpoint
+builder.Services.AddAppointmentsMessaging(builder.Configuration);
 
 var app = builder.Build();
 

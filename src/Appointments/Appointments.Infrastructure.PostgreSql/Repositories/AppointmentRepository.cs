@@ -61,7 +61,9 @@ namespace Appointments.Infrastructure.PostgreSql.Repositories
         public async Task<IEnumerable<Appointment>> GetActiveBySpecializationIdAsync(string specializationId, CancellationToken cancellationToken = default)
         {
             return await _context.Appointments
-                .Where(a => a.SpecializationId == specializationId && a.Status != "Canceled" && a.Status != "Completed")
+                .Where(a => a.SpecializationId == specializationId
+                            && a.Status != AppointmentStatuses.Canceled
+                            && a.Status != AppointmentStatuses.Completed)
                 .ToListAsync(cancellationToken);
         }
 
@@ -69,7 +71,9 @@ namespace Appointments.Infrastructure.PostgreSql.Repositories
         public async Task<IEnumerable<Appointment>> GetActiveByServiceIdAsync(string serviceId, CancellationToken cancellationToken = default)
         {
             return await _context.Appointments
-                .Where(a => a.ServiceId == serviceId && a.Status != "Canceled" && a.Status != "Completed")
+                .Where(a => a.ServiceId == serviceId
+                            && a.Status != AppointmentStatuses.Canceled
+                            && a.Status != AppointmentStatuses.Completed)
                 .ToListAsync(cancellationToken);
         }
 

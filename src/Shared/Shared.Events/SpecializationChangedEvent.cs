@@ -1,6 +1,27 @@
 namespace Shared.Events
 {
     /// <summary>
+    /// Типы изменений, передаваемые в SpecializationChangedEvent.ChangeType.
+    /// </summary>
+    public static class SpecializationChangeTypes
+    {
+        /// <summary>Изменился статус самой специализации.</summary>
+        public const string SpecializationStatus = "SpecializationStatus";
+
+        /// <summary>Изменился статус конкретной медицинской услуги.</summary>
+        public const string ServiceStatus = "ServiceStatus";
+    }
+
+    /// <summary>
+    /// Статусы специализаций/услуг в сервисе Services.
+    /// </summary>
+    public static class ServiceStatuses
+    {
+        public const string Active = "Active";
+        public const string Inactive = "Inactive";
+    }
+
+    /// <summary>
     /// Событие, публикуемое сервисом Services при изменении специализации или медицинской услуги.
     /// Appointments подписывается на него, чтобы отменять/блокировать записи к неактивным врачам.
     /// </summary>
@@ -12,10 +33,13 @@ namespace Shared.Events
         /// <summary>Название специализации.</summary>
         public string SpecializationName { get; set; } = string.Empty;
 
-        /// <summary>Новый статус специализации: "Active" или "Inactive".</summary>
+        /// <summary>Новый статус: см. ServiceStatuses.</summary>
         public string Status { get; set; } = string.Empty;
 
-        /// <summary>Тип изменения: "SpecializationStatus" или "ServiceStatus".</summary>
+        /// <summary>Предыдущий статус (для аудита и идемпотентной обработки).</summary>
+        public string? OldStatus { get; set; }
+
+        /// <summary>Тип изменения: см. SpecializationChangeTypes.</summary>
         public string ChangeType { get; set; } = string.Empty;
 
         /// <summary>Идентификатор услуги (если изменение касается конкретной услуги).</summary>
