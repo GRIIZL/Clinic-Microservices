@@ -20,7 +20,7 @@ namespace Appointments.Domain
         public string Timeslot { get; set; } = string.Empty; // Например, "10:30 - 11:00"
 
         // Статус записи: "Pending", "Approved", "Canceled", "Completed"
-        public string Status { get; set; } = "Pending";
+        public string Status { get; set; } = AppointmentStatuses.Pending;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

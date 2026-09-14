@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Appointments.Application.Interfaces;
 using Appointments.Application.Models;
 using Appointments.Application.Services;
 
@@ -12,10 +13,12 @@ namespace AppointmentsAPI.Controllers
     public class AppointmentsController : ControllerBase
     {
         private readonly AppointmentService _appointmentService;
+        private readonly ISlotService _slotService;
 
-        public AppointmentsController(AppointmentService appointmentService)
+        public AppointmentsController(AppointmentService appointmentService, ISlotService slotService)
         {
             _appointmentService = appointmentService;
+            _slotService = slotService;
         }
 
         // US-6 (AC-4, AC-5): Запись на прием пациентом
@@ -117,7 +120,7 @@ namespace AppointmentsAPI.Controllers
                 return BadRequest(new { message = "DoctorId, categoryName and date parameters are required." });
             }
 
-            var result = await _appointmentService.GetAvailableSlotsAsync(doctorId, date, categoryName, cancellationToken);
+            var result = await _slotService.GetAvailableSlotsAsync(doctorId, date, categoryName, cancellationToken);
             return Ok(result);
         }
 

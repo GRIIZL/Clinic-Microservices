@@ -19,6 +19,7 @@
     <Project Path="src/Appointments/Appointments.Application/Appointments.Application.csproj" />
     <Project Path="src/Appointments/Appointments.Domain/Appointments.Domain.csproj" />
     <Project Path="src/Appointments/Appointments.Infrastructure.PostgreSql/Appointments.Infrastructure.PostgreSql.csproj" />
+    <Project Path="src/Appointments/Appointments.Infrastructure.RabbitMQ/Appointments.Infrastructure.RabbitMQ.csproj" />
     <Project Path="src/Appointments/AppointmentsAPI/AppointmentsAPI.csproj" />
   </Folder>
   <Folder Name="/src/Profiles/">
@@ -32,6 +33,7 @@
     <Project Path="src/Services/Services.Application/Services.Application.csproj" />
     <Project Path="src/Services/Services.Domain/Services.Domain.csproj" />
     <Project Path="src/Services/Services.Infrastructure.MongoDB/Services.Infrastructure.MongoDB.csproj" />
+    <Project Path="src/Services/Services.Infrastructure.RabbitMQ/Services.Infrastructure.RabbitMQ.csproj" />
     <Project Path="src/Services/Services.ServicesAPI/Services.ServicesAPI.csproj" />
   </Folder>
   <Folder Name="/Shared/">
