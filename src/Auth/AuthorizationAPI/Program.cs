@@ -5,6 +5,7 @@ using Auth.Infrastructure.Redis;
 using Auth.Infrastructure.RabbitMQ;
 using AuthorizationAPI.Services;
 using Microsoft.EntityFrameworkCore;
+using Auth.Application.Configuration;
 using Auth.Application.Interfaces;
 using Auth.Application.Services;
 using Auth.Infrastructure.PostgreSql.Data;
@@ -52,9 +53,13 @@ builder.Services.AddStackExchangeRedisCache(options =>
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<ITokenBlacklistService, TokenBlacklistService>();
-// Шина сообщений: реализация Publisher'а регистрируется как Singleton —
-// переиспользует одно соединение RabbitMQ на всё время жизни приложения
-builder.Services.AddSingleton<IEventPublisher, RabbitMqPublisher>();
+// Шина сообщений: MassTransit + RabbitMQ (топология, повторы и соединения на стороне библиотеки)
+builder.Services.AddAuthMessaging(builder.Configuration);
+// Публикатор событий: адаптер над MassTransit IPublishEndpoint
+builder.Services.AddScoped<IEventPublisher, MassTransitEventPublisher>();
+// Отправка писем: SMTP-настройки берутся из секции "Email" (appsettings / user-secrets)
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
+builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();

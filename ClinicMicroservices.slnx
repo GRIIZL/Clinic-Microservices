@@ -22,6 +22,12 @@
     <Project Path="src/Appointments/Appointments.Infrastructure.RabbitMQ/Appointments.Infrastructure.RabbitMQ.csproj" />
     <Project Path="src/Appointments/AppointmentsAPI/AppointmentsAPI.csproj" />
   </Folder>
+  <Folder Name="/src/Documents/">
+    <Project Path="src/Documents/Documents.Application/Documents.Application.csproj" />
+    <Project Path="src/Documents/Documents.Domain/Documents.Domain.csproj" />
+    <Project Path="src/Documents/Documents.Infrastructure/Documents.Infrastructure.csproj" />
+    <Project Path="src/Documents/DocumentsAPI/DocumentsAPI.csproj" />
+  </Folder>
   <Folder Name="/src/Profiles/">
     <Project Path="src/Profiles/Profiles.Application/Profiles.Application.csproj" />
     <Project Path="src/Profiles/Profiles.Domain/Profiles.Domain.csproj" />

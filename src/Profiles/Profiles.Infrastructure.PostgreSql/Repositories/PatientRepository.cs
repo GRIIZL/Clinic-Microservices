@@ -46,6 +46,13 @@ namespace Profiles.Infrastructure.PostgreSql.Repositories
             return await _context.Patients.Where(p => !p.IsLinkedToAccount).ToListAsync(cancellationToken);
         }
 
+        public async Task<PatientProfile?> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)
+        {
+            // Идемпотентность обработки событий Auth: профиль создаётся уже связанным с аккаунтом,
+            // поэтому искать надо по всем профилям, а не только по несвязанным
+            return await _context.Patients.FirstOrDefaultAsync(p => p.AccountId == accountId, cancellationToken);
+        }
+
         public async Task AddAsync(PatientProfile profile, CancellationToken cancellationToken = default)
         {
             await _context.Patients.AddAsync(profile, cancellationToken);

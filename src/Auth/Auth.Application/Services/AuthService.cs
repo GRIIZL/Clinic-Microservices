@@ -2,11 +2,13 @@ using System;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Auth.Application.Configuration;
 using Auth.Application.Interfaces;
 using Auth.Application.Models;
 using Auth.Domain;
 using Shared.Events;
+
 
 namespace Auth.Application.Services
 {
@@ -15,18 +17,21 @@ namespace Auth.Application.Services
         private readonly IAccountRepository _accountRepository;
         private readonly ITokenService _tokenService;
         private readonly IEventPublisher _eventPublisher;
-        private readonly ILogger<AuthService> _logger;
+        private readonly IEmailSender _emailSender;
+        private readonly EmailOptions _emailOptions;
 
         public AuthService(
             IAccountRepository accountRepository,
             ITokenService tokenService,
             IEventPublisher eventPublisher,
-            ILogger<AuthService> logger)
+            IEmailSender emailSender,
+            IOptions<EmailOptions> emailOptions)
         {
             _accountRepository = accountRepository;
             _tokenService = tokenService;
             _eventPublisher = eventPublisher;
-            _logger = logger;
+            _emailSender = emailSender;
+            _emailOptions = emailOptions.Value;
         }
 
         public async Task<bool> IsEmailRegisteredAsync(string email, CancellationToken cancellationToken = default)
@@ -65,11 +70,13 @@ await _accountRepository.AddAsync(newAccount, cancellationToken);
                 CreatedAt = DateTime.UtcNow
             }, cancellationToken);
 
-            var confirmationLink = $"http://localhost:api/auth/verify?token={verificationToken}";
-            _logger.LogInformation($"\n===============================================\n" +
-                                    $"SENDING EMAIL ON: {newAccount.Email}\n" +
-                                    $"To confirm registration go to:\n{confirmationLink}\n" +
-                                    $"==================================================");
+            // Ссылка подтверждения собирается из конфигурации (секция "Email"), токен экранируется
+            var confirmationLink = string.Format(
+                _emailOptions.ConfirmationUrlTemplate,
+                Uri.EscapeDataString(verificationToken));
+
+            await _emailSender.SendVerificationEmailAsync(newAccount.Email, confirmationLink, cancellationToken);
+
             return true;
         }
 
