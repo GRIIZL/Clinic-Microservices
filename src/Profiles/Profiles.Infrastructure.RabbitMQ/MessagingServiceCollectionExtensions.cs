@@ -2,22 +2,22 @@ using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Appointments.Infrastructure.RabbitMQ
+namespace Profiles.Infrastructure.RabbitMQ
 {
     /// <summary>
-    /// Регистрация шины сообщений Appointments.
+    /// Регистрация шины сообщений Profiles.
     /// Детали MassTransit инкапсулированы здесь, чтобы Program.cs оставался тонким.
     /// </summary>
     public static class MessagingServiceCollectionExtensions
     {
-        public static IServiceCollection AddAppointmentsMessaging(
+        public static IServiceCollection AddProfilesMessaging(
             this IServiceCollection services,
             IConfiguration configuration)
         {
             services.AddMassTransit(bus =>
             {
-                // Регистрируем consumer события об изменении специализации
-                bus.AddConsumer<SpecializationChangedEventConsumer>();
+                // Consumer события регистрации из Auth
+                bus.AddConsumer<UserRegisteredEventConsumer>();
 
                 bus.UsingRabbitMq((context, cfg) =>
                 {
@@ -32,10 +32,17 @@ namespace Appointments.Infrastructure.RabbitMQ
                             mqHost.Password(configuration["RabbitMQPassword"] ?? "guest");
                         });
 
-                    // Собственная durable-очередь сервиса Appointments
-                    cfg.ReceiveEndpoint("appointments-specialization-events", endpoint =>
+                    // Собственная durable-очередь сервиса Profiles
+                    cfg.ReceiveEndpoint("profiles-user-registered-events", endpoint =>
                     {
-                        endpoint.ConfigureConsumer<SpecializationChangedEventConsumer>(context);
+                        // Не более 1 сообщения за раз — не перегружаем БД при шквале событий
+                        endpoint.PrefetchCount = 1;
+
+                        // Повторы с паузой вместо бесконечного requeue-цикла:
+                        // после исчерпания попыток сообщение уходит в _error queue (DLQ)
+                        endpoint.UseMessageRetry(retry => retry.Interval(5, TimeSpan.FromSeconds(2)));
+
+                        endpoint.ConfigureConsumer<UserRegisteredEventConsumer>(context);
                     });
                 });
             });

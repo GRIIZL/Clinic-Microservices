@@ -19,13 +19,15 @@ namespace Services.Infrastructure.RabbitMQ
                 // Publisher-only сервис: consumer'ов нет
                 bus.UsingRabbitMq((context, cfg) =>
                 {
+                    var host = configuration["RabbitMQHost"] ?? "localhost";
+                    var port = int.TryParse(configuration["RabbitMQPort"], out var parsedPort) ? parsedPort : 5672;
+
                     cfg.Host(
-                        configuration["RabbitMQHost"] ?? "localhost",
-                        "/",
-                        host =>
+                        new Uri($"rabbitmq://{host}:{port}/"),
+                        mqHost =>
                         {
-                            host.Username(configuration["RabbitMQUser"] ?? "guest");
-                            host.Password(configuration["RabbitMQPassword"] ?? "guest");
+                            mqHost.Username(configuration["RabbitMQUser"] ?? "guest");
+                            mqHost.Password(configuration["RabbitMQPassword"] ?? "guest");
                         });
                 });
             });

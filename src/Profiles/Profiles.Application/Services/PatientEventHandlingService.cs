@@ -58,17 +58,12 @@ namespace Profiles.Application.Services
                 registeredEvent.Email);
         }
 
-        // Вспомогательный поиск профиля, связанного с аккаунтом.
-        // Для малого объёма данных это допустимо; при росте — добавить прямой lookup по AccountId в репозитории.
-        private async Task<PatientProfile?> FindByAccountIdAsync(Guid accountId, CancellationToken cancellationToken)
+        // Профиль ищем напрямую по AccountId: создаваемый профиль сразу связан с аккаунтом,
+        // поэтому поиск по GetUnlinkedProfilesAsync никогда его не находил и redelivery
+        // события порождал дубликаты
+        private Task<PatientProfile?> FindByAccountIdAsync(Guid accountId, CancellationToken cancellationToken)
         {
-            var unlinked = await _patientRepository.GetUnlinkedProfilesAsync(cancellationToken);
-            foreach (var profile in unlinked)
-            {
-                if (profile.AccountId == accountId)
-                    return profile;
-            }
-            return null;
+            return _patientRepository.GetByAccountIdAsync(accountId, cancellationToken);
         }
     }
 }

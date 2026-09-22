@@ -2,23 +2,21 @@ using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Appointments.Infrastructure.RabbitMQ
+namespace Auth.Infrastructure.RabbitMQ
 {
     /// <summary>
-    /// Регистрация шины сообщений Appointments.
-    /// Детали MassTransit инкапсулированы здесь, чтобы Program.cs оставался тонким.
+    /// Точка подключения брокера сообщений к Auth.
+    /// Провайдер остаётся заменяемым: реализация IEventPublisher знает только про MassTransit,
+    /// а Application-слой — только про свой интерфейс.
     /// </summary>
     public static class MessagingServiceCollectionExtensions
     {
-        public static IServiceCollection AddAppointmentsMessaging(
+        public static IServiceCollection AddAuthMessaging(
             this IServiceCollection services,
             IConfiguration configuration)
         {
             services.AddMassTransit(bus =>
             {
-                // Регистрируем consumer события об изменении специализации
-                bus.AddConsumer<SpecializationChangedEventConsumer>();
-
                 bus.UsingRabbitMq((context, cfg) =>
                 {
                     var host = configuration["RabbitMQHost"] ?? "localhost";
@@ -31,12 +29,6 @@ namespace Appointments.Infrastructure.RabbitMQ
                             mqHost.Username(configuration["RabbitMQUser"] ?? "guest");
                             mqHost.Password(configuration["RabbitMQPassword"] ?? "guest");
                         });
-
-                    // Собственная durable-очередь сервиса Appointments
-                    cfg.ReceiveEndpoint("appointments-specialization-events", endpoint =>
-                    {
-                        endpoint.ConfigureConsumer<SpecializationChangedEventConsumer>(context);
-                    });
                 });
             });
 

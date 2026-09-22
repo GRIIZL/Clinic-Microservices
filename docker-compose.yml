@@ -77,6 +77,36 @@ services:
     networks:
       - clinic-network
 
+  documents-db:
+    image: postgres:16-alpine
+    container_name: clinic-documents-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: InnowiseSuperSecretPassword123!
+      POSTGRES_DB: DocumentsDB
+    ports:
+      - "5435:5432" # Локальный внешний порт 5435
+    volumes:
+      - documents-db-data:/var/lib/postgresql/data
+    networks:
+      - clinic-network
+
+
+  minio:
+    image: quay.io/minio/minio:RELEASE.2024-04-18T19-09-19Z
+    container_name: clinic-minio
+    ports:
+      - "9000:9000"     # API порт для C# драйвера
+      - "9001:9001"     # Веб-панель управления (Console)
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: InnowiseMinioSuperSecretPassword123!
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - clinic-network
+
 
 networks:
   clinic-network:
@@ -89,3 +119,5 @@ volumes:
   offices-db-data:
   profiles-db-data:
   rabbitmq_data:
+  minio_data:
+  documents-db-data:

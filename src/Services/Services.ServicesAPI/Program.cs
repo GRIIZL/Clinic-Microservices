@@ -1,5 +1,7 @@
+using MongoDB.Driver;
 using Services.Application.Interfaces;
 using Services.Application.Services;
+using Services.Infrastructure.MongoDb.Configuration;
 using Services.Infrastructure.MongoDb.Repositories;
 using Services.Infrastructure.RabbitMQ;
 
@@ -19,7 +21,15 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Регистрация инфраструктуры NoSQL MongoDB
+// Регистрация инфраструктуры NoSQL MongoDB.
+// MongoClient — singleton: он потокобезопасен и сам держит пул соединений,
+// поэтому одно соединение переиспользуется всеми запросами приложения.
+builder.Services.AddSingleton<IMongoClient>(_ =>
+    new MongoClient(builder.Configuration.GetConnectionString("MongoConnection")));
+
+// Имена базы и коллекции вынесены в конфигурацию (секция "MongoDb"), а не зашиты в репозиторий
+builder.Services.Configure<MongoDbOptions>(builder.Configuration.GetSection(MongoDbOptions.SectionName));
+
 builder.Services.AddScoped<ISpecializationRepository, SpecializationRepository>();
 
 // Регистрация сервиса бизнес-логики

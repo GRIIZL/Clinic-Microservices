@@ -1,10 +1,11 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Services.Application.Interfaces;
 using Services.Domain;
+using Services.Infrastructure.MongoDb.Configuration;
 
 namespace Services.Infrastructure.MongoDb.Repositories
 {
@@ -12,12 +13,12 @@ namespace Services.Infrastructure.MongoDb.Repositories
     {
         private readonly IMongoCollection<Specialization> _collection;
 
-        public SpecializationRepository(IConfiguration configuration)
+        // IMongoClient внедряется из DI (singleton): соединение переиспользуется всем приложением,
+        // а имена базы и коллекции приходят из конфигурации, а не зашиты в код.
+        public SpecializationRepository(IMongoClient mongoClient, IOptions<MongoDbOptions> options)
         {
-            // Подключаемся к Mongo (база ServicesDB)
-            var client = new MongoClient(configuration.GetConnectionString("MongoConnection"));
-            var database = client.GetDatabase("ServicesDB");
-            _collection = database.GetCollection<Specialization>("Specializations");
+            var database = mongoClient.GetDatabase(options.Value.DatabaseName);
+            _collection = database.GetCollection<Specialization>(options.Value.CollectionName);
         }
 
         public async Task<Specialization?> GetByIdAsync(string id, CancellationToken cancellationToken = default)

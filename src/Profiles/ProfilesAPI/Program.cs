@@ -10,6 +10,10 @@ using Profiles.Application.Interfaces;
 using Profiles.Infrastructure.PostgreSql.Data;
 using Profiles.Infrastructure.PostgreSql.Repositories;
 
+// «Прививка» от конфликтов UTC часовых поясов Postgres — один раз при старте приложения,
+// а не при каждом создании модели DbContext
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -30,8 +34,8 @@ builder.Services.AddScoped<DoctorService>();
 builder.Services.AddScoped<ReceptionistService>();
 builder.Services.AddScoped<IPatientEventHandlingService, PatientEventHandlingService>();
 
-// Фоновый подписчик RabbitMQ: стартует вместе с приложением и получает события из Auth
-builder.Services.AddHostedService<RabbitMqConsumer>();
+// Шина MassTransit (RabbitMQ): consumer события UserRegisteredEvent + retry/DLQ
+builder.Services.AddProfilesMessaging(builder.Configuration);
 
 var app = builder.Build();
 

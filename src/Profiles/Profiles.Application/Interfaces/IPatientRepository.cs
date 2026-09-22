@@ -12,6 +12,8 @@ namespace Profiles.Application.Interfaces
         Task<IEnumerable<PatientProfile>> GetAllAsync(string? seatchName, CancellationToken cancellationToken = default);
         // Ищем только не связанные с аккаунтами профили для мэтчинга (AC-4)
         Task<IEnumerable<PatientProfile>> GetUnlinkedProfilesAsync(CancellationToken cancellationToken = default);
+        // Прямой поиск профиля по аккаунту: нужен для идемпотентной обработки событий из Auth
+        Task<PatientProfile?> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default);
         Task AddAsync(PatientProfile profile, CancellationToken cancellationToken = default);
         Task UpdateAsync(PatientProfile profile, CancellationToken cancellationToken = default);
         Task DeleteAsync(PatientProfile profile, CancellationToken cancellationToken = default);
