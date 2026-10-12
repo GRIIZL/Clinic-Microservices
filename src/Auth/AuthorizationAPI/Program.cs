@@ -1,12 +1,9 @@
 using System;
-using System.Text;
-using System.Threading.Tasks;
 using Auth.Infrastructure.Redis;
 using Auth.Infrastructure.RabbitMQ;
+using AuthorizationAPI.Configuration;
 using AuthorizationAPI.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Auth.Application.Configuration;
 using Auth.Application.Interfaces;
 using Auth.Application.Services;
@@ -49,48 +46,9 @@ builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailO
 builder.Services.AddSingleton<IEmailSender, MailKitEmailSender>();
 builder.Services.AddScoped<AuthService>();
 
-// 4. JWT Bearer аутентификация: токен валидируется стандартно, а через OnTokenValidated
-// дополнительно проверяется blacklist в Redis. Это делает отозванные при sign-out токены
-// реально невалидными до истечения их срока.
-var jwtSecret = builder.Configuration["Jwt:Secret"]
-    ?? throw new InvalidOperationException("Jwt:Secret is not configured.");
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
-            ClockSkew = TimeSpan.Zero // без запаса: срок действия = ровно 15 минут из TokenService
-        };
-
-        options.Events = new JwtBearerEvents
-        {
-            OnTokenValidated = async context =>
-            {
-                var rawToken = context.SecurityToken as Microsoft.IdentityModel.JsonWebTokens.JsonWebToken;
-                var tokenValue = rawToken?.EncodedToken;
-                if (string.IsNullOrEmpty(tokenValue))
-                {
-                    context.Fail("Token could not be resolved for blacklist check.");
-                    return;
-                }
-
-                var blacklist = context.HttpContext.RequestServices
-                    .GetRequiredService<ITokenBlacklistService>();
-
-                if (await blacklist.IsTokenBlacklistedAsync(tokenValue, context.HttpContext.RequestAborted))
-                {
-                    context.Fail("Token has been revoked (logged out).");
-                }
-            }
-        };
-    });
+// 4. JWT Bearer аутентификация + проверка blacklist отозванных токенов в Redis.
+// Вся настройка вынесена в AuthorizationAPI.Configuration.JwtBearerConfiguration.
+builder.Services.AddJwtAuthentication(builder.Configuration);
 
 var app = builder.Build();
 
