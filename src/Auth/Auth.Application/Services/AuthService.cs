@@ -14,27 +14,48 @@ namespace Auth.Application.Services
 {
     public class AuthService
     {
+        private const string EmailCacheKeyPrefix = "email:";
+        private static readonly TimeSpan EmailCacheTtl = TimeSpan.FromMinutes(5);
+
         private readonly IAccountRepository _accountRepository;
         private readonly ITokenService _tokenService;
         private readonly IEventPublisher _eventPublisher;
+        private readonly ICacheService _cache;
         private readonly EmailOptions _emailOptions;
 
         public AuthService(
             IAccountRepository accountRepository,
             ITokenService tokenService,
             IEventPublisher eventPublisher,
+            ICacheService cache,
             IOptions<EmailOptions> emailOptions)
         {
             _accountRepository = accountRepository;
             _tokenService = tokenService;
             _eventPublisher = eventPublisher;
+            _cache = cache;
             _emailOptions = emailOptions.Value;
         }
 
         public async Task<bool> IsEmailRegisteredAsync(string email, CancellationToken cancellationToken = default)
         {
-            if(string.IsNullOrWhiteSpace(email)) return false;
-            return await _accountRepository.ExistByEmailAsync(email.ToLower().Trim(), cancellationToken);
+            if (string.IsNullOrWhiteSpace(email)) return false;
+
+            var normalizedEmail = email.ToLower().Trim();
+            var cacheKey = $"{EmailCacheKeyPrefix}{normalizedEmail}";
+
+            // Сначала проверяем кеш: "true" = уже зарегистрирован, "false" = нет
+            var cached = await _cache.GetAsync(cacheKey, cancellationToken);
+            if (cached != null)
+                return cached == "true";
+
+            // Кеш промазан — читаем из БД
+            var exists = await _accountRepository.ExistByEmailAsync(normalizedEmail, cancellationToken);
+
+            // Записываем результат в кеш на 5 минут (email не меняется)
+            await _cache.SetAsync(cacheKey, exists ? "true" : "false", EmailCacheTtl, cancellationToken);
+
+            return exists;
         }
 
         public async Task<bool> RegisterPatientAsync(RegisterRequestDto request, CancellationToken cancellationToken = default)
@@ -54,7 +75,10 @@ namespace Auth.Application.Services
                 VerificationTokenExpires = DateTime.UtcNow.AddHours(24)
             };
 
-await _accountRepository.AddAsync(newAccount, cancellationToken);
+            await _accountRepository.AddAsync(newAccount, cancellationToken);
+
+            // Инвалидируем кеш для этого email: пользователь теперь точно существует
+            await _cache.RemoveAsync($"{EmailCacheKeyPrefix}{newAccount.Email}", cancellationToken);
 
             // Публикуем событие в RabbitMQ: другие микросервисы (Profiles) узнают о новой регистрации
             // и смогут создать/связать профиль пациента (asynchronous, eventual consistency).
