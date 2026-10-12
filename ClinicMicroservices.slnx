@@ -48,5 +48,6 @@
   <Folder Name="/src/Shared/" />
   <Folder Name="/tests/">
     <Project Path="tests/Services.Application.Tests/Services.Application.Tests.csproj" />
+    <Project Path="tests/Services.IntegrationTests/Services.IntegrationTests.csproj" />
   </Folder>
 </Solution>
