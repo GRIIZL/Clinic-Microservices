@@ -2,8 +2,8 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
 using Auth.Application.Interfaces;
 using Auth.Application.Models;
 using Auth.Application.Services;
@@ -15,10 +15,12 @@ namespace AuthorizationAPI.Controllers
     public class AuthController : ControllerBase
     {
         private readonly AuthService _authService;
+        private readonly ITokenBlacklistService _tokenBlacklistService;
 
-        public AuthController(AuthService authService)
+        public AuthController(AuthService authService, ITokenBlacklistService tokenBlacklistService)
         {
             _authService = authService;
+            _tokenBlacklistService = tokenBlacklistService;
         }
 
         [HttpGet("check-email")]
@@ -85,15 +87,13 @@ namespace AuthorizationAPI.Controllers
             return Ok(authResult);
         }
 
+        // Требует валидный (и не отозванный) токен: сам факт допуска к методу означает,
+        // что middleware JWT уже проверил подпись, срок и blacklist.
+        [Authorize]
         [HttpPost("sign-out")]
         public async Task<IActionResult> SignOutUser(CancellationToken cancellationToken)
         {
             var authHeader = Request.Headers["Authorization"].ToString();
-            if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
-            {
-                return BadRequest(new { message = "Token missing or malformed." });
-            }
-
             var token = authHeader.Substring("Bearer ".Length).Trim();
 
             try
@@ -102,8 +102,7 @@ namespace AuthorizationAPI.Controllers
                 var jwtToken = handler.ReadJwtToken(token);
                 var expiry = jwtToken.ValidTo;
 
-                var blacklistService = HttpContext.RequestServices.GetRequiredService<ITokenBlacklistService>();
-                await blacklistService.BlacklistTokenAsync(token, expiry, cancellationToken);
+                await _tokenBlacklistService.BlacklistTokenAsync(token, expiry, cancellationToken);
 
                 return Ok(new { message = "You've logged out successfully. Token invalidated." });
             }
