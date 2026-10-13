@@ -1,0 +1,177 @@
+{
+  "Routes": [
+
+    {
+      "DownstreamPathTemplate": "/api/auth/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5176 }
+      ],
+      "UpstreamPathTemplate": "/api/auth/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "FileCacheOptions": { "TtlSec": 0 },
+      "QoSOptions": {
+        "TimeoutValue": 5000
+      },
+      "Key": "auth-service"
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/appointments/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5250 }
+      ],
+      "UpstreamPathTemplate": "/api/appointments/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "FileCacheOptions": { "TtlSec": 0 },
+      "QoSOptions": {
+        "TimeoutValue": 10000
+      },
+      "Key": "appointments-service"
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/appointments",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5250 }
+      ],
+      "UpstreamPathTemplate": "/api/appointments",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "FileCacheOptions": { "TtlSec": 0 },
+      "QoSOptions": {
+        "TimeoutValue": 10000
+      },
+      "Key": "appointments-service"
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/documents/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5270 }
+      ],
+      "UpstreamPathTemplate": "/api/documents/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "FileCacheOptions": { "TtlSec": 0 },
+      "QoSOptions": {
+        "TimeoutValue": 15000
+      },
+      "Key": "documents-service"
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/specializations/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5285 }
+      ],
+      "UpstreamPathTemplate": "/api/specializations/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "FileCacheOptions": { "TtlSec": 60 },
+      "Key": "services-service"
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/specializations",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5285 }
+      ],
+      "UpstreamPathTemplate": "/api/specializations",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "FileCacheOptions": { "TtlSec": 60 },
+      "Key": "services-service"
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/doctors/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5210 }
+      ],
+      "UpstreamPathTemplate": "/api/doctors/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "PATCH", "DELETE" ],
+      "FileCacheOptions": { "TtlSec": 0 },
+      "Key": "profiles-service"
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/doctors",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5210 }
+      ],
+      "UpstreamPathTemplate": "/api/doctors",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "FileCacheOptions": { "TtlSec": 0 },
+      "Key": "profiles-service"
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/patients/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5210 }
+      ],
+      "UpstreamPathTemplate": "/api/patients/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "FileCacheOptions": { "TtlSec": 0 },
+      "Key": "profiles-service"
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/patients",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5210 }
+      ],
+      "UpstreamPathTemplate": "/api/patients",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "FileCacheOptions": { "TtlSec": 0 },
+      "Key": "profiles-service"
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/receptionists/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5210 }
+      ],
+      "UpstreamPathTemplate": "/api/receptionists/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "FileCacheOptions": { "TtlSec": 0 },
+      "Key": "profiles-service"
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/offices/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5190 }
+      ],
+      "UpstreamPathTemplate": "/api/offices/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "FileCacheOptions": { "TtlSec": 30 },
+      "Key": "offices-service"
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/offices",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5190 }
+      ],
+      "UpstreamPathTemplate": "/api/offices",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "FileCacheOptions": { "TtlSec": 30 },
+      "Key": "offices-service"
+    }
+  ],
+
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:5000",
+    "RequestIdKey": "X-Request-Id"
+  }
+}

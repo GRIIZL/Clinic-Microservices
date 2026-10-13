@@ -14,7 +14,9 @@
     <Project Path="src/Offices/Offices.Infrastructure.MongoDB/Offices.Infrastructure.MongoDB.csproj" />
     <Project Path="src/Offices/OfficesAPI/OfficesAPI.csproj" />
   </Folder>
-  <Folder Name="/src/" />
+  <Folder Name="/Gateway/">
+    <Project Path="src/GatewayAPI/GatewayAPI.csproj" />
+  </Folder>
   <Folder Name="/src/Appointments/">
     <Project Path="src/Appointments/Appointments.Application/Appointments.Application.csproj" />
     <Project Path="src/Appointments/Appointments.Domain/Appointments.Domain.csproj" />
