@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -107,6 +108,41 @@ namespace AppointmentsAPI.Controllers
             return File(fileBytes, "application/pdf", $"MedicalReport_{appointmentId}.pdf");
         }
 
+        // US-66: Перенос записи пациентом (только для статуса Pending — AC-1)
+        [HttpPatch("{id}/reschedule")]
+        public async Task<IActionResult> Reschedule(Guid id, [FromBody] RescheduleAppointmentDto request, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            // [Required] не отлавливает Guid.Empty / default(DateTime),
+            // поэтому проверяем обязательные поля явно — тексты по F-2, F-5, F-6.
+            if (request.DoctorId == Guid.Empty)
+            {
+                return BadRequest(new { message = "Please, choose the doctor" });
+            }
+
+            if (request.Date == default)
+            {
+                return BadRequest(new { message = "Please, select the date" });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Timeslot))
+            {
+                return BadRequest(new { message = "Please, select the time slot" });
+            }
+
+            var result = await _appointmentService.RescheduleAppointmentAsync(id, request, cancellationToken);
+
+            return result switch
+            {
+                RescheduleResult.Success => Ok(new { message = "Appointment has been rescheduled." }),
+                RescheduleResult.NotFound => NotFound(new { message = "Appointment not found." }),
+                RescheduleResult.NotReschedulable => Conflict(new { message = "Only appointments that are not approved can be rescheduled." }),
+                RescheduleResult.SlotTaken => Conflict(new { message = "The selected time slot is already taken." }),
+                _ => BadRequest(new { message = "Invalid time slot format. Expected 'HH:mm - HH:mm'." })
+            };
+        }
+
         // US-7: Получение динамической сетки доступных временных слотов для записи
         [HttpGet("available-slots")]
         public async Task<IActionResult> GetSlots(
@@ -122,6 +158,31 @@ namespace AppointmentsAPI.Controllers
 
             var result = await _slotService.GetAvailableSlotsAsync(doctorId, date, categoryName, cancellationToken);
             return Ok(result);
+        }
+
+        // US-66 (F-5): Даты диапазона, на которые у врача есть хотя бы один свободный слот.
+        // Фронт блокирует в datepicker дни, которых нет в этом списке.
+        [HttpGet("available-dates")]
+        public async Task<IActionResult> GetAvailableDates(
+            [FromQuery] Guid doctorId,
+            [FromQuery] DateTime from,
+            [FromQuery] DateTime to,
+            [FromQuery] string categoryName,
+            CancellationToken cancellationToken)
+        {
+            if (doctorId == Guid.Empty || string.IsNullOrEmpty(categoryName) || from == default || to == default)
+            {
+                return BadRequest(new { message = "DoctorId, categoryName, from and to parameters are required." });
+            }
+
+            if (to.Date < from.Date)
+            {
+                return BadRequest(new { message = "The 'to' date must not be earlier than the 'from' date." });
+            }
+
+            var dates = await _slotService.GetAvailableDatesAsync(doctorId, from, to, categoryName, cancellationToken);
+
+            return Ok(dates.Select(d => d.ToString("yyyy-MM-dd")));
         }
 
     }

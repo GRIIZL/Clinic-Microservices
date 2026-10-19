@@ -57,6 +57,19 @@ namespace Appointments.Infrastructure.PostgreSql.Repositories
                 .ToListAsync(cancellationToken);
         }
 
+        // US-66 (F-5): записи врача за диапазон дат одним запросом.
+        public async Task<IEnumerable<Appointment>> GetByDoctorIdRangeAsync(Guid doctorId, DateTime from, DateTime to, CancellationToken cancellationToken = default)
+        {
+            var fromDate = from.Date;
+            var toDate = to.Date;
+
+            return await _context.Appointments
+                .Where(a => a.DoctorId == doctorId
+                            && a.Date.Date >= fromDate
+                            && a.Date.Date <= toDate)
+                .ToListAsync(cancellationToken);
+        }
+
         // Каскадная отмена: активные записи по специализации (фильтрация на стороне БД)
         public async Task<IEnumerable<Appointment>> GetActiveBySpecializationIdAsync(string specializationId, CancellationToken cancellationToken = default)
         {

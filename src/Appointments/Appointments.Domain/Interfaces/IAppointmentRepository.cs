@@ -11,6 +11,10 @@ namespace Appointments.Application.Interfaces
         Task<Appointment?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
         Task<IEnumerable<Appointment>> GetByPatientIdAsync(Guid patientId, CancellationToken cancellationToken = default);
         Task<IEnumerable<Appointment>> GetByDoctorIdAsync(Guid doctorId, DateTime date, CancellationToken cancellationToken = default);
+
+        // US-66 (F-5): все записи врача за диапазон дат — нужен один запрос,
+        // чтобы посчитать, на какие дни у врача ещё есть свободные окна.
+        Task<IEnumerable<Appointment>> GetByDoctorIdRangeAsync(Guid doctorId, DateTime from, DateTime to, CancellationToken cancellationToken = default);
         Task AddAsync(Appointment appointment, CancellationToken cancellationToken = default);
         Task UpdateAsync(Appointment appointment, CancellationToken cancellationToken = default);
         Task DeleteAsync(Appointment appointment, CancellationToken cancellationToken = default);
