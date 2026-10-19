@@ -64,6 +64,66 @@ namespace Appointments.Application.Services
             return true;
         }
 
+        // US-66: Перенос записи пациентом.
+        // По AC-3 меняются только врач, дата и временной слот; специализация,
+        // услуга и офис остаются прежними.
+        public async Task<RescheduleResult> RescheduleAppointmentAsync(
+            Guid id,
+            RescheduleAppointmentDto dto,
+            CancellationToken cancellationToken = default)
+        {
+            var appointment = await _repository.GetByIdAsync(id, cancellationToken);
+            if (appointment == null) return RescheduleResult.NotFound;
+
+            // AC-1: переносить можно только записи, ожидающие подтверждения.
+            if (appointment.Status != AppointmentStatuses.Pending) return RescheduleResult.NotReschedulable;
+
+            if (!TryParseTimeslot(dto.Timeslot, out var newStart, out var newEnd))
+            {
+                return RescheduleResult.InvalidTimeslot;
+            }
+
+            // Слот должен быть свободен у выбранного врача на выбранную дату.
+            // Собственную запись при проверке не учитываем.
+            var sameDayAppointments = await _repository.GetByDoctorIdAsync(dto.DoctorId, dto.Date, cancellationToken);
+
+            var hasOverlap = sameDayAppointments.Any(a =>
+                a.Id != id
+                && a.Status != AppointmentStatuses.Canceled
+                && TryParseTimeslot(a.Timeslot, out var existingStart, out var existingEnd)
+                && newStart < existingEnd
+                && existingStart < newEnd);
+
+            if (hasOverlap) return RescheduleResult.SlotTaken;
+
+            appointment.DoctorId = dto.DoctorId;
+            appointment.Date = dto.Date.Date;
+            appointment.Timeslot = dto.Timeslot.Trim();
+            appointment.UpdatedAt = DateTime.UtcNow;
+
+            await _repository.UpdateAsync(appointment, cancellationToken);
+            return RescheduleResult.Success;
+        }
+
+        /// <summary>
+        /// Разбирает строку слота вида "10:30 - 11:00".
+        /// Возвращает false, если формат неверный или конец не позже начала.
+        /// </summary>
+        private static bool TryParseTimeslot(string timeslot, out TimeSpan start, out TimeSpan end)
+        {
+            start = default;
+            end = default;
+
+            if (string.IsNullOrWhiteSpace(timeslot)) return false;
+
+            var parts = timeslot.Split('-');
+            if (parts.Length != 2) return false;
+
+            return TimeSpan.TryParse(parts[0].Trim(), out start)
+                   && TimeSpan.TryParse(parts[1].Trim(), out end)
+                   && end > start;
+        }
+
         // US-10: Получение расписания доктора на выбранную дату с сортировкой по времени слота (AC-3)
         public async Task<IEnumerable<AppointmentScheduleDto>> GetDoctorScheduleAsync(Guid doctorId, DateTime date, CancellationToken cancellationToken = default)
         {

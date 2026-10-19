@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Appointments.Application.Models;
@@ -19,6 +20,18 @@ namespace Appointments.Application.Interfaces
         Task<AvailableSlotsResponseDto> GetAvailableSlotsAsync(
             Guid doctorId,
             DateTime date,
+            string categoryName,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// US-66 (F-5): возвращает даты из диапазона, на которые у врача
+        /// остаётся хотя бы одно свободное окно нужной длительности.
+        /// Нужен фронту, чтобы блокировать в datepicker дни без слотов.
+        /// </summary>
+        Task<IReadOnlyList<DateTime>> GetAvailableDatesAsync(
+            Guid doctorId,
+            DateTime from,
+            DateTime to,
             string categoryName,
             CancellationToken cancellationToken = default);
     }
