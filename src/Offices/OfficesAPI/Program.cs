@@ -31,6 +31,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(); // Используем стандартный Swagger для удобства
 
+// JWT-валидация выполняется на уровне Gateway — бизнес-сервис не проверяет токены сам.
+
 // 1. Регистрируем официальный клиент NoSQL MongoDB в DI
 var mongoConnectionString = builder.Configuration.GetConnectionString("MongoConnection");
 builder.Services.AddSingleton<IMongoClient>(_ => new MongoClient(mongoConnectionString));

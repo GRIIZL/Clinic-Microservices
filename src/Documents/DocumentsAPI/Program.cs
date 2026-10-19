@@ -14,6 +14,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 // builder.Services.AddSwaggerGen();
 
+// JWT-валидация выполняется на уровне Gateway — бизнес-сервис не проверяет токены сам.
+
 // Настройки MinIO: секция "MinIO" из appsettings.json, переменных окружения (MinIO__BucketName=...)
 // или user-secrets. Ошибки в настройках проверяются сразу при старте (ValidateOnStart),
 // а не всплывают при первой загрузке файла.
