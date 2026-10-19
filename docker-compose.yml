@@ -1,35 +1,6 @@
 version: '3.8'
 
 services:
-  # ============================================
-  # API Gateway (Ocelot + Polly)
-  # ============================================
-  gateway:
-    build:
-      context: .
-      dockerfile: src/GatewayAPI/Dockerfile
-    container_name: clinic-gateway
-    ports:
-      - "5000:5000"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:5000
-      # Подключаемся к сервисам через docker-сеть (имена хостов = container_name)
-      - Auth__BaseUrl=http://auth-api:5176
-      - Appointments__BaseUrl=http://appointments-api:5250
-      - Documents__BaseUrl=http://documents-api:5270
-      - Services__BaseUrl=http://services-api:5285
-      - Profiles__BaseUrl=http://profiles-api:5210
-      - Offices__BaseUrl=http://offices-api:5190
-    depends_on:
-      - auth-api
-      - appointments-api
-      - documents-api
-      - services-api
-      - profiles-api
-      - offices-api
-    networks:
-      - clinic-network
   auth-db:
     image: postgres:16-alpine 
     container_name: clinic-auth-db

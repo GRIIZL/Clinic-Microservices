@@ -22,6 +22,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
+// JWT-валидация выполняется на уровне Gateway — бизнес-сервис не проверяет токены сам.
+
 
 builder.Services.AddDbContext<ProfilesDataContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));

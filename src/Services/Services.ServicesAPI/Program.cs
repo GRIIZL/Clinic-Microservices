@@ -12,6 +12,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// JWT-валидация выполняется на уровне Gateway — бизнес-сервис не проверяет токены сам.
+
 // Настройка CORS политик, чтобы фронтенд мог обращаться к порту 5230 без блокировок браузера
 builder.Services.AddCors(options =>
 {

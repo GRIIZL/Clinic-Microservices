@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
 using Ocelot.Provider.Polly;
+using Shared.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,7 +23,8 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins(corsOrigins)
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials(); // обязательно: фронт будет слать Authorization-заголовок
     });
 });
 
@@ -35,6 +37,20 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });
+
+// ============================================
+// JWT Bearer — единая точка валидации токенов.
+// Все бизнес-сервисы (Appointments, Profiles, Offices, Services, Documents)
+// не знают о JWT — они получают уже авторизованный контекст от Gateway.
+// ============================================
+builder.Services.AddSharedJwtAuthentication(builder.Configuration);
+
+// ============================================
+// Публичные пути — маршруты, которые НЕ требуют авторизации.
+// Настройка из секции "PublicPaths" в appsettings.json.
+// ============================================
+builder.Services.Configure<PublicPathsOptions>(
+    builder.Configuration.GetSection(PublicPathsOptions.SectionName));
 
 // ============================================
 // Ocelot + Polly
@@ -55,7 +71,7 @@ builder.Services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 // ============================================
-// Middleware Pipeline
+// Middleware Pipeline (порядок важен!)
 // ============================================
 if (app.Environment.IsDevelopment())
 {
@@ -79,6 +95,16 @@ app.Use(async (context, next) =>
     await next();
 });
 
+// 1. JWT-валидация — проверяет подпись, issuer, audience, lifetime.
+//    Если токен невалиден — сразу 401.
+app.UseAuthentication();
+
+// 2. Точечная авторизация — решает, нужно ли требовать аутентификацию
+//    для конкретного маршрута (публичные vs защищённые).
+app.UseGatewayAuthorization();
+
+// 3. Ocelot — маршрутизирует запрос к бизнес-сервисам.
+//    На этом этапе контекст уже авторизован (или запрос был публичным).
 await app.UseOcelot();
 
 app.Run();
