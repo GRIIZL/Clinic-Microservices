@@ -1,0 +1,89 @@
+<app-page-header
+  title="Личный кабинет пациента"
+  subtitle="Ваши визиты: перенос, отмена и медицинские заключения"
+/>
+
+@if (profile(); as patient) {
+  <div class="profile-card section-card">
+    <div>
+      <h2>{{ patient.lastName }} {{ patient.firstName }} {{ patient.middleName }}</h2>
+      <p class="muted">{{ patient.phoneNumber }} · дата рождения {{ formatDate(patient.dateOfBirth) }}</p>
+    </div>
+  </div>
+}
+
+@if (loading()) {
+  <div class="centered"><mat-spinner diameter="36" /></div>
+} @else if (profileMissing()) {
+  <div class="section-card">
+    <app-empty-state
+      message="Профиль пациента не найден. Обратитесь в регистратуру, чтобы связать аккаунт с карточкой."
+      icon="person_off"
+    />
+  </div>
+} @else if (appointments().length === 0) {
+  <div class="section-card">
+    <app-empty-state message="У вас пока нет записей." icon="event_busy" />
+  </div>
+} @else {
+  <div class="section-card">
+    <div class="section-header">
+      <h2>Мои записи</h2>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Дата</th>
+            <th>Слот</th>
+            <th>Врач</th>
+            <th>Услуга</th>
+            <th>Статус</th>
+            <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (appointment of appointments(); track appointment.id) {
+            <tr>
+              <td>{{ formatDate(appointment.date) }}</td>
+              <td>{{ appointment.timeslot }}</td>
+              <td>{{ doctorName(appointment.doctorId) }}</td>
+              <td>{{ serviceName(appointment.specializationId, appointment.serviceId) }}</td>
+              <td><app-status-badge [status]="appointment.status" /></td>
+              <td>
+                <div class="row-actions">
+                  <button mat-stroked-button type="button" (click)="viewResult(appointment.id)">
+                    Заключение
+                  </button>
+
+                  @if (canReschedule(appointment)) {
+                    <button
+                      mat-flat-button
+                      color="primary"
+                      type="button"
+                      (click)="reschedule(appointment)"
+                    >
+                      Перенести
+                    </button>
+                  }
+
+                  @if (appointment.status !== 'Canceled') {
+                    <button
+                      mat-flat-button
+                      color="warn"
+                      type="button"
+                      (click)="cancelAppointment(appointment)"
+                    >
+                      Отменить
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}

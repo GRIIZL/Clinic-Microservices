@@ -68,8 +68,8 @@
         { "Host": "localhost", "Port": 5285 }
       ],
       "UpstreamPathTemplate": "/api/specializations/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
-      "FileCacheOptions": { "TtlSec": 60 },
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "FileCacheOptions": { "TtlSec": 0 },
       "Key": "services-service"
     },
 
@@ -81,7 +81,7 @@
       ],
       "UpstreamPathTemplate": "/api/specializations",
       "UpstreamHttpMethod": [ "GET", "POST" ],
-      "FileCacheOptions": { "TtlSec": 60 },
+      "FileCacheOptions": { "TtlSec": 0 },
       "Key": "services-service"
     },
 
@@ -152,8 +152,8 @@
         { "Host": "localhost", "Port": 5190 }
       ],
       "UpstreamPathTemplate": "/api/offices/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
-      "FileCacheOptions": { "TtlSec": 30 },
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "FileCacheOptions": { "TtlSec": 0 },
       "Key": "offices-service"
     },
 
@@ -165,7 +165,7 @@
       ],
       "UpstreamPathTemplate": "/api/offices",
       "UpstreamHttpMethod": [ "GET", "POST" ],
-      "FileCacheOptions": { "TtlSec": 30 },
+      "FileCacheOptions": { "TtlSec": 0 },
       "Key": "offices-service"
     }
   ],

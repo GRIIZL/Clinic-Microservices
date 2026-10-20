@@ -33,6 +33,15 @@ namespace ProfilesAPI.Controllers
             return Ok(result);
         }
 
+        // Личный кабинет пациента: получить свой профиль по ID аккаунта из JWT
+        [HttpGet("by-account/{accountId}")]
+        public async Task<IActionResult> GetByAccountId(Guid accountId, CancellationToken cancellationToken)
+        {
+            var result = await _patientService.GetPatientByAccountIdAsync(accountId, cancellationToken);
+            if (result == null) return NotFound(new { message = "Patient profile not found for this account." });
+            return Ok(result);
+        }
+
         // US-51: Детальный просмотр профиля пациента со вкладками
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)

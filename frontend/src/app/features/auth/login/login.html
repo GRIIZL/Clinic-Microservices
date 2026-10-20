@@ -1,0 +1,70 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="material-symbols-outlined">local_hospital</span>
+      <span>Медицинский портал</span>
+    </div>
+
+    <h1>Вход в систему</h1>
+    <p class="auth-subtitle">Войдите, чтобы записаться на приём и управлять своими визитами.</p>
+
+    <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Email</mat-label>
+        <input
+          matInput
+          type="email"
+          formControlName="email"
+          placeholder="example@mail.com"
+          autocomplete="email"
+        />
+        @if (form.controls.email.touched && form.controls.email.invalid) {
+          <mat-error>Введите корректный email</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Пароль</mat-label>
+        <input
+          matInput
+          [type]="showPassword() ? 'text' : 'password'"
+          formControlName="password"
+          placeholder="Введите пароль"
+          autocomplete="current-password"
+        />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          (click)="togglePassword()"
+          [attr.aria-label]="showPassword() ? 'Скрыть пароль' : 'Показать пароль'"
+        >
+          <span class="material-symbols-outlined">
+            {{ showPassword() ? 'visibility_off' : 'visibility' }}
+          </span>
+        </button>
+        @if (form.controls.password.touched && form.controls.password.invalid) {
+          <mat-error>Введите пароль</mat-error>
+        }
+      </mat-form-field>
+
+      @if (errorMessage()) {
+        <p class="auth-error">{{ errorMessage() }}</p>
+      }
+
+      <button
+        mat-flat-button
+        color="primary"
+        class="auth-submit"
+        type="submit"
+        [disabled]="form.invalid || loading()"
+      >
+        {{ loading() ? 'Вход...' : 'Войти' }}
+      </button>
+    </form>
+
+    <p class="auth-switch">
+      Еще нет аккаунта? <a routerLink="/register">Зарегистрироваться</a>
+    </p>
+  </div>
+</div>

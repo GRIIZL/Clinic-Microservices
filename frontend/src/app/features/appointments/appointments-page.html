@@ -1,0 +1,295 @@
+<app-page-header
+  title="Портал записи на приём"
+  subtitle="Запись пациента, история визитов и расписание врача"
+/>
+
+<div class="stack">
+  <!-- US-6 -->
+  <section class="section-card">
+    <div class="section-header">
+      <h2>Запись на приём (US-6)</h2>
+    </div>
+
+    @if (patientProfileMissing()) {
+      <p class="inline-error">
+        Профиль пациента не найден. Обратитесь в регистратуру, чтобы создать карточку.
+      </p>
+    }
+
+    <form [formGroup]="bookingForm" class="form-grid">
+      @if (!isPatient()) {
+        <mat-form-field appearance="outline">
+          <mat-label>ID пациента *</mat-label>
+          <input matInput formControlName="patientId" placeholder="GUID из Profiles API" />
+          @if (bookingForm.controls.patientId.touched && bookingForm.controls.patientId.invalid) {
+            <mat-error>Please, sign in to make an appointment</mat-error>
+          }
+        </mat-form-field>
+      }
+
+      <mat-form-field appearance="outline">
+        <mat-label>Специализация *</mat-label>
+        <mat-select
+          formControlName="specializationId"
+          (selectionChange)="onSpecializationChange($event.value)"
+        >
+          @for (spec of specializations(); track spec.id) {
+            <mat-option [value]="spec.id">{{ spec.name }}</mat-option>
+          }
+        </mat-select>
+        @if (
+          bookingForm.controls.specializationId.touched &&
+          bookingForm.controls.specializationId.invalid
+        ) {
+          <mat-error>Please, choose the specialization</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Услуга *</mat-label>
+        <mat-select formControlName="serviceId" (selectionChange)="onSlotInputsChange()">
+          @if (!bookingForm.controls.specializationId.value) {
+            <mat-option disabled>-- Сначала выберите специализацию --</mat-option>
+          } @else if (activeServices().length === 0) {
+            <mat-option disabled>-- Нет активных услуг --</mat-option>
+          } @else {
+            @for (service of activeServices(); track service.id) {
+              <mat-option [value]="service.id">{{ serviceLabel(service) }}</mat-option>
+            }
+          }
+        </mat-select>
+        @if (bookingForm.controls.serviceId.touched && bookingForm.controls.serviceId.invalid) {
+          <mat-error>Please, choose the service</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Врач *</mat-label>
+        <mat-select formControlName="doctorId" (selectionChange)="onSlotInputsChange()">
+          @if (doctorsForBooking().length === 0) {
+            <mat-option disabled>-- Нет врачей по этой специализации --</mat-option>
+          } @else {
+            @for (doctor of doctorsForBooking(); track doctor.id) {
+              <mat-option [value]="doctor.id">{{ doctorLabel(doctor) }}</mat-option>
+            }
+          }
+        </mat-select>
+        @if (bookingForm.controls.doctorId.touched && bookingForm.controls.doctorId.invalid) {
+          <mat-error>Please, choose the doctor</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Офис *</mat-label>
+        <mat-select formControlName="officeId">
+          @for (office of activeOffices(); track office.id) {
+            <mat-option [value]="office.id">{{ officeLabel(office) }}</mat-option>
+          }
+        </mat-select>
+        @if (bookingForm.controls.officeId.touched && bookingForm.controls.officeId.invalid) {
+          <mat-error>Please, choose the office</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Дата приёма *</mat-label>
+        <input
+          matInput
+          [matDatepicker]="bookingDatepicker"
+          [min]="today"
+          formControlName="date"
+          (dateChange)="onSlotInputsChange()"
+        />
+        <mat-datepicker-toggle matIconSuffix [for]="bookingDatepicker" />
+        <mat-datepicker #bookingDatepicker />
+        @if (bookingForm.controls.date.touched && bookingForm.controls.date.invalid) {
+          <mat-error>Please, select the date</mat-error>
+        }
+      </mat-form-field>
+    </form>
+
+    <div class="slots-field">
+      <span class="slots-label">
+        Временной слот *
+        @if (slots(); as available) {
+          <span class="slots-hint">(приём занимает {{ available.requiredSlotsCount * 10 }} мин)</span>
+        }
+      </span>
+      <app-slots-grid
+        [startTimes]="slots()?.availableStartTimes ?? []"
+        [requiredSlotsCount]="slots()?.requiredSlotsCount ?? 0"
+        [selected]="bookingForm.controls.timeslot.value"
+        [loading]="slotsLoading()"
+        (selectedChange)="selectSlot($event)"
+      />
+      @if (bookingForm.controls.timeslot.touched && bookingForm.controls.timeslot.invalid) {
+        <p class="inline-error">Please, choose the timeslot</p>
+      }
+    </div>
+
+    <div class="form-actions">
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        [disabled]="bookingForm.invalid || creating()"
+        (click)="createAppointment()"
+      >
+        {{ creating() ? 'Создание...' : 'Записаться на приём' }}
+      </button>
+    </div>
+  </section>
+
+  <!-- История записей -->
+  @if (!isPatient()) {
+    <section class="section-card">
+      <div class="section-header">
+        <h2>История записей пациента</h2>
+      </div>
+
+      <form [formGroup]="historyForm" class="search-row">
+        <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
+          <mat-label>GUID пациента</mat-label>
+          <input matInput formControlName="patientId" (keyup.enter)="loadHistory()" />
+        </mat-form-field>
+        <button mat-flat-button color="primary" type="button" (click)="loadHistory()">
+          Показать
+        </button>
+      </form>
+
+      @if (historyLoading()) {
+        <div class="centered"><mat-spinner diameter="32" /></div>
+      } @else if (history(); as records) {
+        @if (records.length === 0) {
+          <app-empty-state message="У пациента пока нет записей." icon="event_busy" />
+        } @else {
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Дата</th>
+                  <th>Слот</th>
+                  <th>Специализация</th>
+                  <th>Врач</th>
+                  <th>Услуга</th>
+                  <th>Статус</th>
+                  <th>Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (record of records; track record.id) {
+                  <tr>
+                    <td>{{ formatDate(record.date) }}</td>
+                    <td>{{ record.timeslot }}</td>
+                    <td class="mono">{{ record.specializationId || '-' }}</td>
+                    <td class="mono">{{ record.doctorId || '-' }}</td>
+                    <td class="mono">{{ record.serviceId || '-' }}</td>
+                    <td><app-status-badge [status]="record.status" /></td>
+                    <td>
+                      <div class="row-actions">
+                        <button mat-stroked-button type="button" (click)="viewResult(record.id)">
+                          Заключение
+                        </button>
+                        @if (record.status !== 'Canceled') {
+                          <button
+                            mat-flat-button
+                            color="warn"
+                            type="button"
+                            (click)="cancelAppointment(record)"
+                          >
+                            Отменить
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      } @else {
+        <app-empty-state message="Введите GUID пациента и нажмите «Показать»." icon="search" />
+      }
+    </section>
+  }
+
+  <!-- US-10 -->
+  <section class="section-card">
+    <div class="section-header">
+      <h2>Расписание врача (US-10)</h2>
+    </div>
+
+    <form [formGroup]="scheduleForm" class="search-row">
+      <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
+        <mat-label>Врач</mat-label>
+        <mat-select formControlName="doctorId">
+          @for (doctor of doctors(); track doctor.id) {
+            <mat-option [value]="doctor.id">{{ doctorLabel(doctor) }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="date-field">
+        <mat-label>Дата</mat-label>
+        <input matInput [matDatepicker]="scheduleDatepicker" formControlName="date" />
+        <mat-datepicker-toggle matIconSuffix [for]="scheduleDatepicker" />
+        <mat-datepicker #scheduleDatepicker />
+      </mat-form-field>
+
+      <button mat-flat-button color="primary" type="button" (click)="loadSchedule()">
+        Показать
+      </button>
+    </form>
+
+    @if (scheduleLoading()) {
+      <div class="centered"><mat-spinner diameter="32" /></div>
+    } @else if (schedule(); as items) {
+      @if (items.length === 0) {
+        <app-empty-state message="На эту дату приёмов нет." icon="event_available" />
+      } @else {
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Время</th>
+                <th>Пациент</th>
+                <th>Статус</th>
+                <th>Заключение</th>
+                <th>Действия</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of items; track item.id) {
+                <tr>
+                  <td><strong>{{ item.timeslot }}</strong></td>
+                  <td>{{ item.patientFullName || item.patientId }}</td>
+                  <td><app-status-badge [status]="item.status" /></td>
+                  <td>{{ item.hasResult ? 'Есть' : 'Нет' }}</td>
+                  <td>
+                    <div class="row-actions">
+                      <button mat-stroked-button type="button" (click)="viewResult(item.id)">
+                        Просмотр
+                      </button>
+                      @if (item.hasResult) {
+                        <button mat-flat-button color="primary" type="button" (click)="editResult(item.id)">
+                          Редактировать
+                        </button>
+                      } @else {
+                        <button mat-flat-button color="primary" type="button" (click)="createResult(item.id)">
+                          + Заключение
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    } @else {
+      <app-empty-state message="Выберите врача и дату, затем нажмите «Показать»." icon="calendar_month" />
+    }
+  </section>
+</div>

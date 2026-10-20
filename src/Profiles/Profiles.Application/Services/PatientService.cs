@@ -56,6 +56,24 @@ namespace Profiles.Application.Services
             };
         }
 
+        // Личный кабинет пациента: профиль, привязанный к аккаунту из JWT
+        public async Task<PatientProfileResponseDto?> GetPatientByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)
+        {
+            var profile = await _patientRepository.GetByAccountIdAsync(accountId, cancellationToken);
+            if (profile == null) return null;
+
+            return new PatientProfileResponseDto
+            {
+                Id = profile.Id,
+                FirstName = profile.FirstName,
+                LastName = profile.LastName,
+                MiddleName = profile.MiddleName,
+                PhoneNumber = profile.PhoneNumber,
+                DateOfBirth = profile.DateOfBirth,
+                PhotoUrl = profile.PhotoUrl
+            };
+        }
+
         // Ключевой метод умного создания профиля (US-8 / AC-4 / AC-5 / AC-6)
         public async Task<object> CreatePatientProfileAsync(CreatePatientProfileDto dto, CancellationToken cancellationToken = default)
         {

@@ -56,21 +56,11 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "Authorization API v1"));
-    
-    app.UseStaticFiles(new StaticFileOptions
-    {
-        OnPrepareResponse = ctx =>
-        {
-            ctx.Context.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
-        }
-    });
 }
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseDefaultFiles();
-app.UseStaticFiles();
 app.MapControllers();
 
 app.Run();

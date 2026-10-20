@@ -92,9 +92,6 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowAll");
 app.UseAuthorization();
 
-app.UseDefaultFiles(); // Ищет index.html в wwwroot по умолчанию
-app.UseStaticFiles();  // Разрешает серверу отдавать HTML/JS файлы
-
 app.MapControllers();
 
 app.Run();

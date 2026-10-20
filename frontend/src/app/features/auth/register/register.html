@@ -1,0 +1,96 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="material-symbols-outlined">local_hospital</span>
+      <span>Медицинский портал</span>
+    </div>
+
+    <h1>Регистрация аккаунта</h1>
+    <p class="auth-subtitle">Создайте аккаунт пациента. После регистрации подтвердите email.</p>
+
+    @if (successMessage()) {
+      <p class="auth-success">{{ successMessage() }}</p>
+      <p class="auth-switch">
+        <a routerLink="/login">Перейти ко входу</a>
+      </p>
+    } @else {
+      <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input
+            matInput
+            type="email"
+            formControlName="email"
+            placeholder="example@mail.com"
+            autocomplete="email"
+            (blur)="checkEmail()"
+          />
+          @if (form.controls.email.touched && form.controls.email.invalid) {
+            <mat-error>Введите корректный email</mat-error>
+          } @else if (emailState() === 'taken') {
+            <mat-error>User with this email already exists</mat-error>
+          } @else if (emailState() === 'checking') {
+            <mat-hint>Проверяем email...</mat-hint>
+          } @else if (emailState() === 'unique') {
+            <mat-hint>Email свободен</mat-hint>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Пароль</mat-label>
+          <input
+            matInput
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            placeholder="От 6 до 15 символов"
+            autocomplete="new-password"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="togglePassword()"
+            [attr.aria-label]="showPassword() ? 'Скрыть пароль' : 'Показать пароль'"
+          >
+            <span class="material-symbols-outlined">
+              {{ showPassword() ? 'visibility_off' : 'visibility' }}
+            </span>
+          </button>
+          @if (form.controls.password.touched && form.controls.password.invalid) {
+            <mat-error>Пароль должен быть от 6 до 15 символов</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Подтверждение пароля</mat-label>
+          <input
+            matInput
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="confirmPassword"
+            placeholder="Повторите пароль"
+            autocomplete="new-password"
+          />
+          @if (form.controls.confirmPassword.touched && form.hasError('passwordMismatch')) {
+            <mat-error>Пароли не совпадают</mat-error>
+          }
+        </mat-form-field>
+
+        @if (errorMessage()) {
+          <p class="auth-error">{{ errorMessage() }}</p>
+        }
+
+        <button
+          mat-flat-button
+          color="primary"
+          class="auth-submit"
+          type="submit"
+          [disabled]="form.invalid || loading() || emailState() === 'taken'"
+        >
+          {{ loading() ? 'Регистрация...' : 'Зарегистрироваться' }}
+        </button>
+      </form>
+
+      <p class="auth-switch">Уже есть аккаунт? <a routerLink="/login">Войти</a></p>
+    }
+  </div>
+</div>

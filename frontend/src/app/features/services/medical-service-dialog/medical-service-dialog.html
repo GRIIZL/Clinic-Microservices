@@ -1,0 +1,50 @@
+<h2 mat-dialog-title>
+  {{ isEditMode ? 'Редактировать услугу' : 'Добавить услугу' }}
+</h2>
+
+<mat-dialog-content>
+  <form class="dialog-form" [formGroup]="form" (ngSubmit)="save()">
+    <mat-form-field appearance="outline">
+      <mat-label>Название *</mat-label>
+      <input matInput formControlName="name" placeholder="Например, Приём терапевта" />
+      @if (form.controls.name.touched && form.controls.name.invalid) {
+        <mat-error>Please, enter the service name</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Цена *</mat-label>
+      <input matInput type="number" step="0.01" min="0.01" formControlName="price" placeholder="50.00" />
+      @if (form.controls.price.touched && form.controls.price.invalid) {
+        <mat-error>Please, enter the price</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Категория *</mat-label>
+      <mat-select formControlName="categoryName">
+        @for (category of categories; track category) {
+          <mat-option [value]="category">{{ category }}</mat-option>
+        }
+      </mat-select>
+      @if (form.controls.categoryName.touched && form.controls.categoryName.invalid) {
+        <mat-error>Please, choose the service category</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="status-field">
+      <span class="status-label">Статус *</span>
+      <mat-radio-group formControlName="status" class="status-options">
+        <mat-radio-button value="Active">Active</mat-radio-button>
+        <mat-radio-button value="Inactive">Inactive</mat-radio-button>
+      </mat-radio-group>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button type="button" (click)="cancel()">Отмена</button>
+  <button mat-flat-button color="primary" type="button" [disabled]="form.invalid" (click)="save()">
+    Сохранить
+  </button>
+</mat-dialog-actions>

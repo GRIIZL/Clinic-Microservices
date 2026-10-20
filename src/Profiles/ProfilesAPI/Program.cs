@@ -49,6 +49,4 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.MapControllers();
-app.UseDefaultFiles(); // Ищет index.html в wwwroot по умолчанию
-app.UseStaticFiles();  // Разрешает серверу отдавать HTML/JS файлы
 app.Run();
