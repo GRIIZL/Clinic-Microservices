@@ -1,0 +1,53 @@
+<h2 mat-dialog-title>
+  {{ data.patient ? 'Редактировать пациента' : 'Регистрация пациента' }}
+</h2>
+
+<mat-dialog-content>
+  <form class="dialog-form" [formGroup]="form" (ngSubmit)="save()">
+    <mat-form-field appearance="outline">
+      <mat-label>Имя *</mat-label>
+      <input matInput formControlName="firstName" />
+      @if (form.controls.firstName.touched && form.controls.firstName.invalid) {
+        <mat-error>Please, enter the first name</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Фамилия *</mat-label>
+      <input matInput formControlName="lastName" />
+      @if (form.controls.lastName.touched && form.controls.lastName.invalid) {
+        <mat-error>Please, enter the last name</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Отчество</mat-label>
+      <input matInput formControlName="middleName" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Телефон *</mat-label>
+      <input matInput formControlName="phoneNumber" placeholder="+375..." />
+      @if (form.controls.phoneNumber.touched && form.controls.phoneNumber.invalid) {
+        <mat-error>Please, enter the phone number</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Дата рождения *</mat-label>
+      <input matInput type="date" formControlName="dateOfBirth" />
+      @if (form.controls.dateOfBirth.touched && form.controls.dateOfBirth.hasError('required')) {
+        <mat-error>Please, select the date</mat-error>
+      } @else if (form.controls.dateOfBirth.hasError('futureDate')) {
+        <mat-error>Дата рождения не может быть в будущем</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button type="button" (click)="cancel()">Отмена</button>
+  <button mat-flat-button color="primary" type="button" [disabled]="form.invalid" (click)="save()">
+    Сохранить
+  </button>
+</mat-dialog-actions>

@@ -1,0 +1,54 @@
+<app-page-header
+  title="Портал управления офисами"
+  subtitle="Адреса клиники, телефоны регистратуры и доступность офисов"
+>
+  <button mat-flat-button color="primary" type="button" (click)="create()">
+    <span class="material-symbols-outlined">add</span>
+    Create Office
+  </button>
+</app-page-header>
+
+@if (loading()) {
+  <div class="centered">
+    <mat-spinner diameter="36" />
+  </div>
+} @else if (offices().length === 0) {
+  <div class="section-card">
+    <app-empty-state message="Офисов пока нет. Создайте первый!" icon="apartment" />
+  </div>
+} @else {
+  <div class="offices-grid">
+    @for (office of offices(); track office.id) {
+      <article class="office-card" [class.inactive]="office.status === 'Inactive'">
+        <div class="office-body">
+          <app-status-badge [status]="office.status" />
+          <h3>{{ office.city }} Office</h3>
+          <dl class="office-info">
+            <div>
+              <dt>Address:</dt>
+              <dd>{{ address(office) }}</dd>
+            </div>
+            <div>
+              <dt>Phone:</dt>
+              <dd>{{ office.registryPhoneNumber }}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="office-actions">
+          <button mat-stroked-button type="button" (click)="edit(office)">Edit</button>
+          <button
+            mat-flat-button
+            type="button"
+            class="toggle-btn"
+            [color]="office.status === 'Active' ? 'warn' : 'primary'"
+            [disabled]="togglingId() === office.id"
+            (click)="toggleStatus(office)"
+          >
+            {{ office.status === 'Active' ? 'Deactivate' : 'Activate' }}
+          </button>
+        </div>
+      </article>
+    }
+  </div>
+}

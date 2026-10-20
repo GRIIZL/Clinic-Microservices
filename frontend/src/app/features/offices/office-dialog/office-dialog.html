@@ -1,0 +1,76 @@
+<h2 mat-dialog-title>
+  {{ isEditMode ? 'Редактировать офис' : 'Создать офис' }}
+</h2>
+
+<mat-dialog-content>
+  <form class="dialog-form" [formGroup]="form" (ngSubmit)="save()">
+    <mat-form-field appearance="outline">
+      <mat-label>City *</mat-label>
+      <input matInput formControlName="city" placeholder="Например, Минск" />
+      @if (form.controls.city.touched && form.controls.city.invalid) {
+        <mat-error>Please, enter the office's city</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Street *</mat-label>
+      <input matInput formControlName="street" placeholder="Например, Фабрициуса" />
+      @if (form.controls.street.touched && form.controls.street.invalid) {
+        <mat-error>Please, enter the office's street</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>House Number *</mat-label>
+      <input matInput formControlName="houseNumber" placeholder="Например, 8Б" />
+      @if (form.controls.houseNumber.touched && form.controls.houseNumber.invalid) {
+        <mat-error>Please, enter the office's house number</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Office Number *</mat-label>
+      <input matInput formControlName="officeNumber" placeholder="Например, 404" />
+      @if (form.controls.officeNumber.touched && form.controls.officeNumber.invalid) {
+        <mat-error>Please, enter the office number</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Registry Phone Number *</mat-label>
+      <input matInput formControlName="registryPhoneNumber" placeholder="+375291112233" />
+      @if (
+        form.controls.registryPhoneNumber.touched &&
+        form.controls.registryPhoneNumber.invalid
+      ) {
+        <mat-error>Please, enter the phone number</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="status-field">
+      <span class="status-label">Status *</span>
+      <mat-radio-group formControlName="status" class="status-options">
+        <mat-radio-button value="Active">Active</mat-radio-button>
+        <mat-radio-button value="Inactive">Inactive</mat-radio-button>
+      </mat-radio-group>
+    </div>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Photo URL</mat-label>
+      <input matInput formControlName="photoUrl" placeholder="http://example.com" />
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button type="button" (click)="cancel()">Cancel</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    [disabled]="form.invalid || saving()"
+    (click)="save()"
+  >
+    Save changes
+  </button>
+</mat-dialog-actions>

@@ -1,0 +1,117 @@
+<app-page-header
+  title="Панель управления профилями"
+  subtitle="Картотека пациентов и реестр медицинского персонала"
+/>
+
+<div class="stack">
+  <section class="section-card">
+    <div class="section-header">
+      <h2>Картотека пациентов</h2>
+      <div class="section-actions">
+        <button mat-flat-button color="primary" type="button" (click)="registerPatient()">
+          <span class="material-symbols-outlined">person_add</span>
+          Регистрация пациента
+        </button>
+      </div>
+    </div>
+
+    <div class="search-row">
+      <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
+        <mat-label>Поиск пациента по ФИО (US-50)</mat-label>
+        <input matInput [formControl]="patientSearch" (keyup.enter)="loadPatients()" />
+      </mat-form-field>
+      <button mat-stroked-button type="button" (click)="loadPatients()">Найти</button>
+      <button mat-button type="button" (click)="resetPatientSearch()">Сброс</button>
+    </div>
+
+    @if (patientSearchError()) {
+      <p class="inline-error">Incorrect patient name</p>
+    }
+
+    @if (patientsLoading()) {
+      <div class="centered"><mat-spinner diameter="32" /></div>
+    } @else if (patients().length === 0) {
+      <app-empty-state message="Пациентов пока нет." icon="person_off" />
+    } @else {
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ФИО пациента</th>
+              <th>Телефон</th>
+              <th>Дата рождения</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (patient of patients(); track patient.id) {
+              <tr>
+                <td><strong>{{ fullName(patient) }}</strong></td>
+                <td>{{ patient.phoneNumber }}</td>
+                <td>{{ formatDate(patient.dateOfBirth) }}</td>
+                <td>
+                  <button mat-flat-button color="warn" type="button" (click)="deletePatient(patient)">
+                    Удалить
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  <section class="section-card">
+    <div class="section-header">
+      <h2>Реестр медицинского персонала (доктора)</h2>
+    </div>
+
+    <div class="search-row">
+      <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
+        <mat-label>Поиск доктора по ФИО (US-26)</mat-label>
+        <input matInput [formControl]="doctorSearch" (keyup.enter)="loadDoctors()" />
+      </mat-form-field>
+      <button mat-stroked-button type="button" (click)="loadDoctors()">Найти</button>
+    </div>
+
+    @if (doctorSearchEmpty()) {
+      <p class="inline-error">There are no doctors matching this filtration.</p>
+    }
+
+    @if (doctorsLoading()) {
+      <div class="centered"><mat-spinner diameter="32" /></div>
+    } @else if (doctors().length === 0) {
+      <app-empty-state message="Врачей пока нет." icon="medical_information" />
+    } @else {
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ФИО врача</th>
+              <th>Специализация</th>
+              <th>Статус</th>
+              <th>Стаж (US-16)</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (doctor of doctors(); track doctor.id) {
+              <tr>
+                <td><strong>{{ doctor.lastName }}</strong> {{ doctor.firstName }}</td>
+                <td>{{ doctor.specialization }}</td>
+                <td><app-status-badge [status]="doctor.status" /></td>
+                <td>{{ doctor.experience }} л.</td>
+                <td>
+                  <button mat-stroked-button type="button" (click)="viewDoctor(doctor)">
+                    Профиль
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</div>

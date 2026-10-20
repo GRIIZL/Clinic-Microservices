@@ -1,0 +1,34 @@
+.appointment-summary {
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--mat-sys-surface-container);
+  font-size: 0.85rem;
+  color: #334155;
+  margin-bottom: 8px;
+}
+
+.appointment-summary p {
+  margin: 0;
+}
+
+.appointment-summary .hint {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.slots-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.slots-label {
+  font-size: 0.8rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.slots-hint {
+  color: #64748b;
+}

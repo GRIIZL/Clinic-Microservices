@@ -1,0 +1,38 @@
+<h2 mat-dialog-title>
+  {{ isEditMode ? 'Редактировать заключение' : 'Создать заключение' }}
+</h2>
+
+<mat-dialog-content>
+  <form class="dialog-form" [formGroup]="form" (ngSubmit)="save()">
+    <mat-form-field appearance="outline">
+      <mat-label>Жалобы (Complaints) *</mat-label>
+      <textarea matInput rows="3" formControlName="complaints" placeholder="Что беспокоит пациента"></textarea>
+      @if (form.controls.complaints.touched && form.controls.complaints.invalid) {
+        <mat-error>Please, enter the complaints</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Заключение (Conclusion) *</mat-label>
+      <textarea matInput rows="3" formControlName="conclusion" placeholder="Диагноз / заключение врача"></textarea>
+      @if (form.controls.conclusion.touched && form.controls.conclusion.invalid) {
+        <mat-error>Please, enter the conclusion</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Рекомендации (Recommendations) *</mat-label>
+      <textarea matInput rows="3" formControlName="recommendations" placeholder="Рекомендации по лечению"></textarea>
+      @if (form.controls.recommendations.touched && form.controls.recommendations.invalid) {
+        <mat-error>Please, enter the recommendations</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button type="button" (click)="cancel()">Отмена</button>
+  <button mat-flat-button color="primary" type="button" [disabled]="form.invalid" (click)="save()">
+    Сохранить
+  </button>
+</mat-dialog-actions>

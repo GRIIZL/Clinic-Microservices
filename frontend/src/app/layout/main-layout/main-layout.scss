@@ -1,0 +1,87 @@
+.app-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  gap: 8px;
+  background: var(--mat-sys-surface);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #1a73e8;
+  text-decoration: none;
+  font-weight: 600;
+  margin-right: 16px;
+  white-space: nowrap;
+}
+
+.brand-text {
+  font-size: 1rem;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+
+.active-link {
+  background: rgba(26, 115, 232, 0.12);
+  color: #1557b5;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.user-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: none;
+}
+
+.user-name {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.85rem;
+}
+
+.user-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 16px;
+  max-width: 260px;
+  font-size: 0.85rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.user-summary strong {
+  color: var(--mat-sys-on-surface);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 24px 56px;
+}
+
+@media (max-width: 720px) {
+  .brand-text,
+  .user-name {
+    display: none;
+  }
+
+  .app-content {
+    padding: 20px 14px 40px;
+  }
+}

@@ -1,0 +1,74 @@
+<h2 mat-dialog-title>Перенос записи</h2>
+
+<mat-dialog-content>
+  <div class="appointment-summary">
+    <p><strong>Текущая запись:</strong> {{ currentDate() }} в {{ data.appointment.timeslot }}</p>
+    <p class="hint">Специализация, услуга и офис не меняются.</p>
+  </div>
+
+  <form class="dialog-form" [formGroup]="form">
+    <mat-form-field appearance="outline">
+      <mat-label>Врач (F-2) *</mat-label>
+      <mat-select formControlName="doctorId" (selectionChange)="onDoctorChange()">
+        @if (data.doctors.length === 0) {
+          <mat-option disabled>-- Нет врачей по этой специализации --</mat-option>
+        } @else {
+          @for (doctor of data.doctors; track doctor.id) {
+            <mat-option [value]="doctor.id">{{ doctorLabel(doctor) }}</mat-option>
+          }
+        }
+      </mat-select>
+      @if (form.controls.doctorId.touched && form.controls.doctorId.invalid) {
+        <mat-error>Please, choose the doctor</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Дата (F-5) *</mat-label>
+      <input
+        matInput
+        [matDatepicker]="datepicker"
+        [matDatepickerFilter]="dateFilter"
+        [min]="today"
+        formControlName="date"
+        (dateChange)="onDateChange()"
+      />
+      <mat-datepicker-toggle matIconSuffix [for]="datepicker" />
+      <mat-datepicker #datepicker />
+      @if (form.controls.date.touched && form.controls.date.invalid) {
+        <mat-error>Please, select the date</mat-error>
+      } @else if (loadingDates()) {
+        <mat-hint>Загрузка доступных дат...</mat-hint>
+      } @else {
+        <mat-hint>Недоступные дни заблокированы</mat-hint>
+      }
+    </mat-form-field>
+
+    <div class="slots-field">
+      <span class="slots-label">
+        Временной слот (F-6) *
+        @if (requiredSlotsCount() > 0) {
+          <span class="slots-hint">(приём занимает {{ requiredSlotsCount() * 10 }} мин)</span>
+        }
+      </span>
+      <app-slots-grid
+        [startTimes]="startTimes()"
+        [requiredSlotsCount]="requiredSlotsCount()"
+        [selected]="form.controls.timeslot.value"
+        [loading]="loadingSlots()"
+        emptyText="На эту дату свободных слотов нет"
+        (selectedChange)="selectSlot($event)"
+      />
+      @if (form.controls.timeslot.touched && form.controls.timeslot.invalid) {
+        <p class="inline-error">Please, select the time slot</p>
+      }
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button type="button" (click)="cancel()">Отмена</button>
+  <button mat-flat-button color="primary" type="button" [disabled]="form.invalid" (click)="confirm()">
+    Confirm
+  </button>
+</mat-dialog-actions>

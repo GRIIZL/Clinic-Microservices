@@ -1,0 +1,36 @@
+<h2 mat-dialog-title>
+  {{ isEditMode ? 'Редактировать специализацию' : 'Создать специализацию' }}
+</h2>
+
+<mat-dialog-content>
+  <form class="dialog-form" [formGroup]="form" (ngSubmit)="save()">
+    <mat-form-field appearance="outline">
+      <mat-label>Название *</mat-label>
+      <input matInput formControlName="name" placeholder="Например, Терапия" />
+      @if (form.controls.name.touched && form.controls.name.invalid) {
+        <mat-error>Please, enter the name</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="status-field">
+      <span class="status-label">Статус *</span>
+      <mat-radio-group formControlName="status" class="status-options">
+        <mat-radio-button value="Active">Active</mat-radio-button>
+        <mat-radio-button value="Inactive">Inactive</mat-radio-button>
+      </mat-radio-group>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button type="button" (click)="cancel()">Отмена</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    [disabled]="form.invalid"
+    (click)="save()"
+  >
+    Сохранить
+  </button>
+</mat-dialog-actions>

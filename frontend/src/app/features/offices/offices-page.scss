@@ -1,0 +1,80 @@
+.offices-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 20px;
+}
+
+.office-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 12px;
+  background: var(--mat-sys-surface-container-low);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-left: 5px solid #1a73e8;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.office-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.office-card.inactive {
+  border-left-color: #94a3b8;
+  opacity: 0.85;
+}
+
+.office-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.office-body h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #1e293b;
+}
+
+.office-info {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.office-info div {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.office-info dt {
+  font-weight: 600;
+  color: #334155;
+}
+
+.office-info dd {
+  margin: 0;
+}
+
+.office-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.toggle-btn {
+  flex: 1;
+}
+
+.centered {
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
+}

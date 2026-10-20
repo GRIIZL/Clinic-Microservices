@@ -1,0 +1,24 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.search-field {
+  flex: 1 1 280px;
+  min-width: 220px;
+}
+
+.centered {
+  display: flex;
+  justify-content: center;
+  padding: 32px 0;
+}

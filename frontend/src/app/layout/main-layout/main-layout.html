@@ -1,0 +1,47 @@
+<mat-toolbar class="app-toolbar">
+  <a class="brand" routerLink="/">
+    <span class="material-symbols-outlined">local_hospital</span>
+    <span class="brand-text">Медицинский портал</span>
+  </a>
+
+  <nav class="nav">
+    @for (item of navItems(); track item.path) {
+      <a
+        mat-button
+        [routerLink]="item.path"
+        routerLinkActive="active-link"
+        [routerLinkActiveOptions]="{ exact: item.path === '/' }"
+      >
+        {{ item.label }}
+      </a>
+    }
+  </nav>
+
+  <span class="spacer"></span>
+
+  <button
+    mat-button
+    class="user-button"
+    [matMenuTriggerFor]="userMenu"
+    aria-label="Меню пользователя"
+  >
+    <span class="material-symbols-outlined">account_circle</span>
+    <span class="user-name">{{ user()?.email }}</span>
+  </button>
+
+  <mat-menu #userMenu="matMenu">
+    <div class="user-summary">
+      <strong>{{ user()?.email }}</strong>
+      <span>{{ roleLabel() }}</span>
+    </div>
+    <mat-divider />
+    <button mat-menu-item type="button" (click)="logout()">
+      <span class="material-symbols-outlined">logout</span>
+      <span>Выйти</span>
+    </button>
+  </mat-menu>
+</mat-toolbar>
+
+<main class="app-content">
+  <router-outlet />
+</main>
